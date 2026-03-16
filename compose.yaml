@@ -1,0 +1,88 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: frella-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: frella
+      POSTGRES_PASSWORD: frella
+      POSTGRES_DB: frella
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frella"]
+      interval: 10s
+      retries: 5
+
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: frella-api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - clientes-service
+      - contratos-service
+      - prestadores-service
+      - propostas-service
+      - avaliacoes-service
+
+  clientes-service:
+    build: ./backend/services/clientes-service
+    container_name: frella-clientes-service
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  contratos-service:
+    build: ./backend/services/contratos-service
+    container_name: frella-contratos-service
+    ports:
+      - "3002:3002"
+    environment:
+      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  prestadores-service:
+    build: ./backend/services/prestadores-service
+    container_name: frella-prestadores-service
+    ports:
+      - "3003:3003"
+    environment:
+      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  propostas-service:
+    build: ./backend/services/propostas-service
+    container_name: frella-propostas-service
+    ports:
+      - "3004:3004"
+    environment:
+      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  avaliacoes-service:
+    build: ./backend/services/avaliacoes-service
+    container_name: frella-avaliacoes-service
+    ports:
+      - "3005:3005"
+    environment:
+      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
