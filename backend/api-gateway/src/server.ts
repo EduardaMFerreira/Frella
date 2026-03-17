@@ -1,26 +1,24 @@
-import "./app";
 import express from "express";
 import cors from "cors";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
-// IMPORTANDO MIDDLEWARES
 import { logger } from "./middlewares/loggerMiddleware";
-import { auth } from "./middlewares/authMiddleware";
 import { errorHandler } from "./middlewares/errorMiddleware";
+
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./docs/swagger";
 
 const app = express();
 
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use(cors());
 app.use(express.json());
-
-// MIDDLEWARES
 app.use(logger);
-// app.use(auth); // opcional
 
-// ROTAS DO GATEWAY
-
+// PROXIES (SEM pathRewrite)
 app.use(
-  "/clientes",
+  "/api/v1/clientes",
   createProxyMiddleware({
     target: "http://clientes-service:3001",
     changeOrigin: true,
@@ -28,7 +26,7 @@ app.use(
 );
 
 app.use(
-  "/contratos",
+  "/api/v1/contratos",
   createProxyMiddleware({
     target: "http://contratos-service:3002",
     changeOrigin: true,
@@ -36,7 +34,7 @@ app.use(
 );
 
 app.use(
-  "/prestadores",
+  "/api/v1/prestadores",
   createProxyMiddleware({
     target: "http://prestadores-service:3003",
     changeOrigin: true,
@@ -44,7 +42,7 @@ app.use(
 );
 
 app.use(
-  "/propostas",
+  "/api/v1/propostas",
   createProxyMiddleware({
     target: "http://propostas-service:3004",
     changeOrigin: true,
@@ -52,14 +50,13 @@ app.use(
 );
 
 app.use(
-  "/avaliacoes",
+  "/api/v1/avaliacoes",
   createProxyMiddleware({
     target: "http://avaliacoes-service:3005",
     changeOrigin: true,
   })
 );
 
-// ERROR HANDLER SEMPRE POR ÚLTIMO
 app.use(errorHandler);
 
 const PORT = 3000;

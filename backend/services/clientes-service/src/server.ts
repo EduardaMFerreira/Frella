@@ -1,11 +1,15 @@
 import express from "express";
+import cors from "cors";
+import clientesRoutes from "./routes/clientes.routes";
 
 const app = express();
 
-app.get("/", (req, res) => {
-  res.send("clientes-service funcionando");
-});
+app.use(cors());
+app.use(express.json());
+
+// ROTAS NA RAIZ
+app.use("/", clientesRoutes);
 
 app.listen(3001, () => {
-  console.log("clientes-service rodando na porta 3001");
+  console.log("Clientes service rodando na porta 3001");
 });
