@@ -1,3 +1,4 @@
+import "./app";
 import express from "express";
 import cors from "cors";
 import { createProxyMiddleware } from "http-proxy-middleware";
@@ -51,7 +52,8 @@ app.use(
     changeOrigin: true
   })
 );
+const PORT = 3000;
 
-app.listen(3000, () => {
-  console.log("API Gateway rodando na porta 3000");
+app.listen(PORT, () => {
+  console.log(`API Gateway rodando na porta ${PORT}`);
 });
