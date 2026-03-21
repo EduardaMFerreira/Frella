@@ -1,14 +1,7 @@
-import express from "express";
-import cors from "cors";
-import avaliacoesRoutes from "./routes/avaliacoes.routes";
+import app from "./app";
 
-const app = express();
+const PORT = process.env.PORT || 3005;
 
-app.use(cors());
-app.use(express.json());
-
-app.use("/", avaliacoesRoutes);
-
-app.listen(3005, () => {
-  console.log("Avaliacoes service rodando na porta 3005");
+app.listen(PORT, () => {
+  console.log(`Avaliacoes service rodando na porta ${PORT}`);
 });
