@@ -1,31 +1,121 @@
 services:
 
-  postgres:
+  #  Bancos de dados 
+
+  postgres-clientes:
     image: postgres:15
-    container_name: frella-postgres
+    container_name: frella-postgres-clientes
     restart: always
     environment:
       POSTGRES_USER: frella
       POSTGRES_PASSWORD: frella
-      POSTGRES_DB: frella
+      POSTGRES_DB: clientes_db
     ports:
-      - "5432:5432"
+      - "5437:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_clientes_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U frella"]
+      test: ["CMD-SHELL", "pg_isready -U frella -d clientes_db"]
       interval: 10s
       retries: 5
 
+  postgres-prestadores:
+    image: postgres:15
+    container_name: frella-postgres-prestadores
+    restart: always
+    environment:
+      POSTGRES_USER: frella
+      POSTGRES_PASSWORD: frella
+      POSTGRES_DB: prestadores_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_prestadores_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frella -d prestadores_db"]
+      interval: 10s
+      retries: 5
+
+  postgres-contratos:
+    image: postgres:15
+    container_name: frella-postgres-contratos
+    restart: always
+    environment:
+      POSTGRES_USER: frella
+      POSTGRES_PASSWORD: frella
+      POSTGRES_DB: contratos_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_contratos_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frella -d contratos_db"]
+      interval: 10s
+      retries: 5
+
+  postgres-propostas:
+    image: postgres:15
+    container_name: frella-postgres-propostas
+    restart: always
+    environment:
+      POSTGRES_USER: frella
+      POSTGRES_PASSWORD: frella
+      POSTGRES_DB: propostas_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_propostas_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frella -d propostas_db"]
+      interval: 10s
+      retries: 5
+
+  postgres-avaliacoes:
+    image: postgres:15
+    container_name: frella-postgres-avaliacoes
+    restart: always
+    environment:
+      POSTGRES_USER: frella
+      POSTGRES_PASSWORD: frella
+      POSTGRES_DB: avaliacoes_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_avaliacoes_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frella -d avaliacoes_db"]
+      interval: 10s
+      retries: 5
+
+  postgres-auth:
+    image: postgres:15
+    container_name: frella-postgres-auth
+    restart: always
+    environment:
+      POSTGRES_USER: frella
+      POSTGRES_PASSWORD: frella
+      POSTGRES_DB: auth_db
+    ports:
+      - "5438:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frella -d auth_db"]
+      interval: 10s
+      retries: 5
+
+  #  Serviços
   api-gateway:
     build: ./backend/api-gateway
     container_name: frella-api-gateway
     ports:
       - "3000:3000"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-frella_secret_key} 
     depends_on:
       - clientes-service
-      - contratos-service
       - prestadores-service
+      - contratos-service
       - propostas-service
       - avaliacoes-service
 
@@ -35,20 +125,10 @@ services:
     ports:
       - "3001:3001"
     environment:
-      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
+      DATABASE_URL: postgresql://frella:frella@postgres-clientes:5432/clientes_db
+      PORT: 3001
     depends_on:
-      postgres:
-        condition: service_healthy
-
-  contratos-service:
-    build: ./backend/services/contratos-service
-    container_name: frella-contratos-service
-    ports:
-      - "3002:3002"
-    environment:
-      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
-    depends_on:
-      postgres:
+      postgres-clientes:
         condition: service_healthy
 
   prestadores-service:
@@ -57,9 +137,22 @@ services:
     ports:
       - "3003:3003"
     environment:
-      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
+      DATABASE_URL: postgresql://frella:frella@postgres-prestadores:5432/prestadores_db
+      PORT: 3003
     depends_on:
-      postgres:
+      postgres-prestadores:
+        condition: service_healthy
+
+  contratos-service:
+    build: ./backend/services/contratos-service
+    container_name: frella-contratos-service
+    ports:
+      - "3002:3002"
+    environment:
+      DATABASE_URL: postgresql://frella:frella@postgres-contratos:5432/contratos_db
+      PORT: 3002
+    depends_on:
+      postgres-contratos:
         condition: service_healthy
 
   propostas-service:
@@ -68,9 +161,10 @@ services:
     ports:
       - "3004:3004"
     environment:
-      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
+      DATABASE_URL: postgresql://frella:frella@postgres-propostas:5432/propostas_db
+      PORT: 3004
     depends_on:
-      postgres:
+      postgres-propostas:
         condition: service_healthy
 
   avaliacoes-service:
@@ -79,10 +173,29 @@ services:
     ports:
       - "3005:3005"
     environment:
-      DATABASE_URL: postgresql://frella:frella@postgres:5432/frella
+      DATABASE_URL: postgresql://frella:frella@postgres-avaliacoes:5432/avaliacoes_db
+      PORT: 3005
     depends_on:
-      postgres:
+      postgres-avaliacoes:
+        condition: service_healthy
+
+  auth-service:
+    build: ./backend/services/auth-service
+    container_name: frella-auth-service
+    ports:
+      - "3006:3006"
+    environment:
+      DATABASE_URL: postgresql://frella:frella@postgres-auth:5432/auth_db
+      PORT: 3006
+      JWT_SECRET: ${JWT_SECRET:-frella_secret_key}
+    depends_on:
+      postgres-auth:
         condition: service_healthy
 
 volumes:
-  postgres_data:
+  postgres_clientes_data:
+  postgres_prestadores_data:
+  postgres_contratos_data:
+  postgres_propostas_data:
+  postgres_avaliacoes_data:
+  postgres_auth_data:
