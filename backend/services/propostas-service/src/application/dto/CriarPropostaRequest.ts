@@ -1,4 +1,4 @@
-export interface CriarPropostaDTO {
+export interface CriarPropostaRequest {
   titulo: string;
   descricao: string;
   valor: number;

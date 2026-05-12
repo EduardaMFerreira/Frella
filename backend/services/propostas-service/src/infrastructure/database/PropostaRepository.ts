@@ -1,23 +1,18 @@
 import { pool } from "./connection";
-
 import { Proposta } from "../../domain/entities/Proposta";
 
 export const PropostaRepository = {
 
   async findAll(): Promise<Proposta[]> {
-
-    const result = await pool.query(
+    const result = await pool.query<Proposta>(
       "SELECT * FROM propostas ORDER BY created_at DESC"
     );
 
     return result.rows;
   },
 
-  async findById(
-    id: string
-  ): Promise<Proposta | null> {
-
-    const result = await pool.query(
+  async findById(id: string): Promise<Proposta | null> {
+    const result = await pool.query<Proposta>(
       "SELECT * FROM propostas WHERE id = $1",
       [id]
     );
@@ -33,8 +28,7 @@ export const PropostaRepository = {
     cliente_id: string;
     prestador_id: string;
   }): Promise<Proposta> {
-
-    const result = await pool.query(
+    const result = await pool.query<Proposta>(
       `
       INSERT INTO propostas (
         titulo,
@@ -46,16 +40,7 @@ export const PropostaRepository = {
         created_at,
         updated_at
       )
-      VALUES (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5,
-        $6,
-        NOW(),
-        NOW()
-      )
+      VALUES ($1,$2,$3,$4,$5,$6,NOW(),NOW())
       RETURNING *
       `,
       [
@@ -71,12 +56,8 @@ export const PropostaRepository = {
     return result.rows[0];
   },
 
-  async updateStatus(
-    id: string,
-    status: string
-  ): Promise<Proposta> {
-
-    const result = await pool.query(
+  async updateStatus(id: string, status: string): Promise<Proposta> {
+    const result = await pool.query<Proposta>(
       `
       UPDATE propostas
       SET status = $1,
@@ -91,11 +72,9 @@ export const PropostaRepository = {
   },
 
   async remove(id: string): Promise<void> {
-
     await pool.query(
       "DELETE FROM propostas WHERE id = $1",
       [id]
     );
   }
-
 };
