@@ -8,9 +8,6 @@ const router = Router();
  * /:
  *   get:
  *     summary: Lista todas avaliações
- *     responses:
- *       200:
- *         description: Lista de avaliações
  */
 router.get("/", controller.getAll);
 
@@ -29,14 +26,6 @@ router.get("/:id", controller.getById);
  *     summary: Cria avaliação
  */
 router.post("/", controller.create);
-
-/**
- * @swagger
- * /{id}:
- *   put:
- *     summary: Atualiza avaliação
- */
-router.put("/:id", controller.update);
 
 /**
  * @swagger
