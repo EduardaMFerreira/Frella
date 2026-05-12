@@ -1,0 +1,6 @@
+export enum StatusContrato {
+  PENDENTE = "PENDENTE",
+  EM_ANDAMENTO = "EM_ANDAMENTO",
+  FINALIZADO = "FINALIZADO",
+  CANCELADO = "CANCELADO",
+}

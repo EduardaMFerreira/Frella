@@ -29,11 +29,27 @@ router.post("/", controller.create);
 
 /**
  * @swagger
- * /api/contratos/{id}:
- *   put:
- *     summary: Atualiza contrato
+ * /api/contratos/{id}/iniciar:
+ *   patch:
+ *     summary: Inicia um contrato pendente
  */
-router.put("/:id", controller.update);
+router.patch("/:id/iniciar", controller.iniciar);
+
+/**
+ * @swagger
+ * /api/contratos/{id}/finalizar:
+ *   patch:
+ *     summary: Finaliza um contrato em andamento
+ */
+router.patch("/:id/finalizar", controller.finalizar);
+
+/**
+ * @swagger
+ * /api/contratos/{id}/cancelar:
+ *   patch:
+ *     summary: Cancela um contrato
+ */
+router.patch("/:id/cancelar", controller.cancelar);
 
 /**
  * @swagger
