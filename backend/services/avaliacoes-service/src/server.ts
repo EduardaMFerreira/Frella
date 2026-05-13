@@ -1,13 +1,11 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
-
 import avaliacoesRoutes from "./routes/avaliacoes.routes";
-
 import { runMigrations } from "./infrastructure/database/migrate";
+import { startConsumers } from "./infrastructure/messaging/consumer";
 
 dotenv.config();
 
@@ -27,40 +25,19 @@ const swaggerSpec = swaggerJsdoc({
   apis: ["./src/routes/*.ts"],
 });
 
-/*
-  DOCS PRIMEIRO
-*/
-app.use(
-  "/docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
-);
-
-/*
-  ROTAS DEPOIS
-*/
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/", avaliacoesRoutes);
 
 const PORT = process.env.PORT || 3005;
 
 runMigrations()
-  .then(() => {
-
+  .then(async () => {
+    await startConsumers();
     app.listen(PORT, () => {
-
-      console.log(
-        `Avaliacoes service rodando na porta ${PORT}`
-      );
-
+      console.log(`Avaliacoes service rodando na porta ${PORT}`);
     });
-
   })
   .catch((err) => {
-
-    console.error(
-      "Erro ao executar migrations:",
-      err
-    );
-
+    console.error("Erro ao executar migrations:", err);
     process.exit(1);
   });
