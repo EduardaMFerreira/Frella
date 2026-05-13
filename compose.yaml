@@ -191,6 +191,20 @@ services:
     depends_on:
       postgres-auth:
         condition: service_healthy
+        
+  rabbitmq:
+      image: rabbitmq:3-management
+      container_name: frella-rabbitmq
+      ports:
+        - "5672:5672"    # porta da aplicação
+        - "15672:15672"  # painel web (acessa no browser depois)
+      environment:
+        RABBITMQ_DEFAULT_USER: frella
+        RABBITMQ_DEFAULT_PASS: frella
+      healthcheck:
+        test: ["CMD", "rabbitmq-diagnostics", "ping"]
+        interval: 10s
+        retries: 5
 
 volumes:
   postgres_clientes_data:
