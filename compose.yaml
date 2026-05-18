@@ -139,6 +139,26 @@ services:
       - frella_net
 
   # ────────────────────────────────────────
+  #  Cache
+  # ────────────────────────────────────────
+
+  redis:
+    image: redis:7-alpine
+    container_name: frella-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --requirepass frella_redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "frella_redis", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - frella_net
+
+  # ────────────────────────────────────────
   #  Serviços
   # ────────────────────────────────────────
 
@@ -167,8 +187,11 @@ services:
     environment:
       DATABASE_URL: postgresql://frella:frella@postgres-clientes:5432/clientes_db
       PORT: 3001
+      REDIS_URL: redis://:frella_redis@redis:6379
     depends_on:
       postgres-clientes:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - frella_net
@@ -181,8 +204,11 @@ services:
     environment:
       DATABASE_URL: postgresql://frella:frella@postgres-prestadores:5432/prestadores_db
       PORT: 3003
+      REDIS_URL: redis://:frella_redis@redis:6379
     depends_on:
       postgres-prestadores:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - frella_net
@@ -196,10 +222,13 @@ services:
       DATABASE_URL: postgresql://frella:frella@postgres-contratos:5432/contratos_db
       PORT: 3002
       RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
+      REDIS_URL: redis://:frella_redis@redis:6379
     depends_on:
       postgres-contratos:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - frella_net
@@ -213,10 +242,13 @@ services:
       DATABASE_URL: postgresql://frella:frella@postgres-propostas:5432/propostas_db
       PORT: 3004
       RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
+      REDIS_URL: redis://:frella_redis@redis:6379
     depends_on:
       postgres-propostas:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - frella_net
@@ -230,10 +262,13 @@ services:
       DATABASE_URL: postgresql://frella:frella@postgres-avaliacoes:5432/avaliacoes_db
       PORT: 3005
       RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
+      REDIS_URL: redis://:frella_redis@redis:6379
     depends_on:
       postgres-avaliacoes:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - frella_net
@@ -264,6 +299,7 @@ volumes:
   postgres_propostas_data:
   postgres_avaliacoes_data:
   postgres_auth_data:
+  redis_data:
 
 networks:
   frella_net:
