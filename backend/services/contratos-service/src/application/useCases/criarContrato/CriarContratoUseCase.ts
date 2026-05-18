@@ -2,6 +2,8 @@ import { ContratoRepository } from "../../../infrastructure/database/ContratoRep
 import { PeriodoServico } from "../../../domain/valueObjects/PeriodoServico";
 import { StatusContrato } from "../../../domain/enums/StatusContrato";
 import { Contrato } from "../../../domain/entities/Contrato";
+import { publishEvent } from "../../../infrastructure/messaging/rabbitmq/RabbitMQConnection";
+import { ContratoCriadoEvent } from "../../../infrastructure/messaging/events/ContratoCriadoEvent";
 
 export interface CriarContratoDTO {
   cliente_id: string;
@@ -20,7 +22,7 @@ export async function CriarContratoUseCase(data: CriarContratoDTO): Promise<Cont
 
   const periodo = PeriodoServico.create(data.data_inicio, data.data_fim);
 
-  return ContratoRepository.create({
+  const contrato = await ContratoRepository.create({
     cliente_id: data.cliente_id,
     prestador_id: data.prestador_id,
     descricao: data.descricao.trim(),
@@ -29,4 +31,21 @@ export async function CriarContratoUseCase(data: CriarContratoDTO): Promise<Cont
     data_fim: periodo.getDataFim(),
     status: StatusContrato.PENDENTE,
   });
+
+  // ✅ Publica evento no RabbitMQ
+  const evento: ContratoCriadoEvent = {
+    tipo: 'contrato.criado',
+    contrato_id: contrato.id,
+    cliente_id: contrato.cliente_id,
+    prestador_id: contrato.prestador_id,
+    descricao: contrato.descricao,
+    valor: contrato.valor,
+    data_inicio: contrato.data_inicio,
+    data_fim: contrato.data_fim,
+    status: contrato.status,
+    created_at: contrato.created_at,
+  };
+  await publishEvent(evento);
+
+  return contrato;
 }

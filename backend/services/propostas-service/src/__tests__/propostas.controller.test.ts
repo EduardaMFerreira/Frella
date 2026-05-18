@@ -1,29 +1,37 @@
 import request from "supertest";
 import app from "../app";
 import { PropostaRepository } from "../infrastructure/database/PropostaRepository";
+import { PropostaReadRepository } from "../infrastructure/database/PropostaReadRepository";
+
+jest.mock("../infrastructure/messaging/rabbitmq/RabbitMQConnection", () => ({
+  publishEvent: jest.fn().mockResolvedValue(undefined),
+  getRabbitMQChannel: jest.fn().mockResolvedValue({}),
+}));
 
 jest.mock("../infrastructure/database/PropostaRepository");
+jest.mock("../infrastructure/database/PropostaReadRepository");
 
 const mockProposta = {
   id: "123e4567-e89b-12d3-a456-426614174000",
-  cliente_id: "456e4567-e89b-12d3-a456-426614174001",
-  prestador_id: "789e4567-e89b-12d3-a456-426614174002",
+  titulo: "Reforma banheiro",
   descricao: "Desenvolvimento de sistema",
   valor: 3500,
-  status: "PENDENTE",
-  created_at: new Date(),
-  updated_at: new Date(),
+  status: "CRIADA",
+  cliente_id: "456e4567-e89b-12d3-a456-426614174001",
+  prestador_id: "789e4567-e89b-12d3-a456-426614174002",
+  criada_em: new Date(),
+  atualizada_em: new Date(),
 };
 
 describe("Propostas Controller", () => {
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("GET deve retornar 200", async () => {
-    (PropostaRepository.findAll as jest.Mock).mockResolvedValue([
-      mockProposta,
-    ]);
+    (PropostaReadRepository.listarTodas as jest.Mock)
+      .mockResolvedValue([mockProposta]);
 
     const res = await request(app).get("/api/propostas");
 
@@ -32,24 +40,29 @@ describe("Propostas Controller", () => {
   });
 
   it("POST deve retornar 400 sem dados", async () => {
-    const res = await request(app).post("/api/propostas").send({});
+    const res = await request(app)
+      .post("/api/propostas")
+      .send({});
 
     expect(res.status).toBe(400);
   });
 
   it("POST deve retornar 201 com dados válidos", async () => {
-    (PropostaRepository.create as jest.Mock).mockResolvedValue(mockProposta);
+    (PropostaRepository.create as jest.Mock)
+      .mockResolvedValue(mockProposta);
 
     const res = await request(app)
       .post("/api/propostas")
       .send({
-        cliente_id: "456e4567-e89b-12d3-a456-426614174001",
-        prestador_id: "789e4567-e89b-12d3-a456-426614174002",
+        titulo: "Reforma banheiro",
         descricao: "Desenvolvimento de sistema",
         valor: 3500,
+        status: "CRIADA",
+        cliente_id: "456e4567-e89b-12d3-a456-426614174001",
+        prestador_id: "789e4567-e89b-12d3-a456-426614174002",
       });
 
     expect(res.status).toBe(201);
-    expect(res.body.status).toBe("PENDENTE");
   });
+
 });

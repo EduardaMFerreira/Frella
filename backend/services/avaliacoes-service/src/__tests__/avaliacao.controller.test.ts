@@ -1,7 +1,11 @@
 import request from "supertest";
 import app from "../app";
-
 import { AvaliacaoRepository } from "../infrastructure/database/AvaliacaoRepository";
+
+jest.mock("../infrastructure/messaging/rabbitmq/RabbitMQConnection", () => ({
+  publishEvent: jest.fn().mockResolvedValue(undefined),
+  getRabbitMQChannel: jest.fn().mockResolvedValue({}),
+}));
 
 jest.mock("../infrastructure/database/AvaliacaoRepository");
 
@@ -22,31 +26,24 @@ describe("Avaliacao Controller", () => {
   });
 
   it("GET deve retornar 200", async () => {
-
     (AvaliacaoRepository.findAll as jest.Mock)
       .mockResolvedValue([mockAvaliacao]);
 
-    const res = await request(app)
-      .get("/api/avaliacoes");
+    const res = await request(app).get("/api/avaliacoes");
 
     expect(res.status).toBe(200);
-
     expect(res.body).toHaveLength(1);
-
   });
 
   it("POST deve retornar 400 sem dados", async () => {
-
     const res = await request(app)
       .post("/api/avaliacoes")
       .send({});
 
     expect(res.status).toBe(400);
-
   });
 
   it("POST deve retornar 201 com dados válidos", async () => {
-
     (AvaliacaoRepository.create as jest.Mock)
       .mockResolvedValue(mockAvaliacao);
 
@@ -60,9 +57,7 @@ describe("Avaliacao Controller", () => {
       });
 
     expect(res.status).toBe(201);
-
     expect(res.body.nota).toBe(5);
-
   });
 
 });

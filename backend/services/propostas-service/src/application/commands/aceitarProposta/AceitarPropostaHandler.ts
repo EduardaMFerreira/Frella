@@ -6,23 +6,34 @@ import { PropostaAceitaEvent } from "../../../infrastructure/messaging/events/Pr
 
 export async function AceitarPropostaHandler(
   command: AceitarPropostaCommand
-): Promise<Proposta | null> {
+): Promise<Proposta> {
   if (!command.proposta_id) {
     throw new Error("ID da proposta é obrigatório");
   }
+
   const proposta = await PropostaRepository.findById(command.proposta_id);
   if (!proposta) {
     throw new Error("Proposta não encontrada");
   }
-  proposta.status = "ACEITA";
+
+  if (proposta.status === "ACEITA") {
+    throw new Error("Proposta já foi aceita");
+  }
+
+  // ✅ Persiste no banco antes de publicar o evento
+  const propostaAtualizada = await PropostaRepository.updateStatus(
+    command.proposta_id,
+    "ACEITA"
+  );
 
   const evento: PropostaAceitaEvent = {
-    tipo: 'proposta.aceita',
-    proposta_id: proposta.id,
-    status: proposta.status,
-    updated_at: new Date(),
+    tipo: "proposta.aceita",
+    proposta_id: propostaAtualizada.id,
+    status: propostaAtualizada.status,
+    updated_at: propostaAtualizada.updated_at,
   };
+
   await publishEvent(evento);
 
-  return proposta;
+  return propostaAtualizada;
 }

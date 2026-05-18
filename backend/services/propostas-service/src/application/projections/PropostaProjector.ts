@@ -1,3 +1,4 @@
+import { pool } from '../../infrastructure/database/connection';
 import { PropostaReadRepository } from '../../infrastructure/database/PropostaReadRepository';
 import { PropostaCriadaEvent } from '../../infrastructure/messaging/events/PropostaCriadaEvent';
 import { PropostaAceitaEvent } from '../../infrastructure/messaging/events/PropostaAceitaEvent';
@@ -5,8 +6,32 @@ import { PropostaRemovidaEvent } from '../../infrastructure/messaging/events/Pro
 
 type PropostaEvento = PropostaCriadaEvent | PropostaAceitaEvent | PropostaRemovidaEvent;
 
-export async function PropostaProjector(evento: PropostaEvento): Promise<void> {
+async function eventoJaProcessado(eventoId: string): Promise<boolean> {
+  const result = await pool.query(
+    'SELECT id FROM eventos_processados WHERE id = $1',
+    [eventoId]
+  );
+  return result.rowCount !== null && result.rowCount > 0;
+}
+
+async function registrarEventoProcessado(eventoId: string, tipo: string): Promise<void> {
+  await pool.query(
+    'INSERT INTO eventos_processados (id, tipo) VALUES ($1, $2)',
+    [eventoId, tipo]
+  );
+}
+
+export async function PropostaProjector(
+  evento: PropostaEvento,
+  eventoId: string
+): Promise<void> {
   console.log('[Projector] Processando evento:', evento.tipo);
+
+  // ✅ Idempotência — ignora se já foi processado antes
+  if (await eventoJaProcessado(eventoId)) {
+    console.warn('[Projector] Evento já processado, ignorando:', eventoId);
+    return;
+  }
 
   if (evento.tipo === 'proposta.criada') {
     await PropostaReadRepository.upsert({
@@ -39,4 +64,7 @@ export async function PropostaProjector(evento: PropostaEvento): Promise<void> {
     await PropostaReadRepository.remover(evento.proposta_id);
     console.log('[Projector] Proposta removida do Read Model:', evento.proposta_id);
   }
+
+  // ✅ Registra como processado somente após executar com sucesso
+  await registrarEventoProcessado(eventoId, evento.tipo);
 }

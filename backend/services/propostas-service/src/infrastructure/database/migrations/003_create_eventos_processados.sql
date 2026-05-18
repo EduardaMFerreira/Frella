@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS eventos_processados (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL,
+  processado_em TIMESTAMP NOT NULL DEFAULT NOW()
+);

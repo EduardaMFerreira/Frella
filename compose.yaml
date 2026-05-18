@@ -1,6 +1,8 @@
 services:
 
-  #  Bancos de dados 
+  # ────────────────────────────────────────
+  #  Bancos de dados
+  # ────────────────────────────────────────
 
   postgres-clientes:
     image: postgres:15
@@ -18,6 +20,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U frella -d clientes_db"]
       interval: 10s
       retries: 5
+    networks:
+      - frella_net
 
   postgres-prestadores:
     image: postgres:15
@@ -35,6 +39,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U frella -d prestadores_db"]
       interval: 10s
       retries: 5
+    networks:
+      - frella_net
 
   postgres-contratos:
     image: postgres:15
@@ -52,6 +58,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U frella -d contratos_db"]
       interval: 10s
       retries: 5
+    networks:
+      - frella_net
 
   postgres-propostas:
     image: postgres:15
@@ -69,6 +77,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U frella -d propostas_db"]
       interval: 10s
       retries: 5
+    networks:
+      - frella_net
 
   postgres-avaliacoes:
     image: postgres:15
@@ -86,6 +96,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U frella -d avaliacoes_db"]
       interval: 10s
       retries: 5
+    networks:
+      - frella_net
 
   postgres-auth:
     image: postgres:15
@@ -103,21 +115,49 @@ services:
       test: ["CMD-SHELL", "pg_isready -U frella -d auth_db"]
       interval: 10s
       retries: 5
+    networks:
+      - frella_net
 
+  # ────────────────────────────────────────
+  #  Mensageria
+  # ────────────────────────────────────────
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: frella-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: frella
+      RABBITMQ_DEFAULT_PASS: frella
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      retries: 5
+    networks:
+      - frella_net
+
+  # ────────────────────────────────────────
   #  Serviços
+  # ────────────────────────────────────────
+
   api-gateway:
     build: ./backend/api-gateway
     container_name: frella-api-gateway
     ports:
       - "3000:3000"
     environment:
-      JWT_SECRET: ${JWT_SECRET:-frella_secret_key} 
+      JWT_SECRET: ${JWT_SECRET:-frella_secret_key}
     depends_on:
       - clientes-service
       - prestadores-service
       - contratos-service
       - propostas-service
       - avaliacoes-service
+      - auth-service
+    networks:
+      - frella_net
 
   clientes-service:
     build: ./backend/services/clientes-service
@@ -130,6 +170,8 @@ services:
     depends_on:
       postgres-clientes:
         condition: service_healthy
+    networks:
+      - frella_net
 
   prestadores-service:
     build: ./backend/services/prestadores-service
@@ -142,6 +184,8 @@ services:
     depends_on:
       postgres-prestadores:
         condition: service_healthy
+    networks:
+      - frella_net
 
   contratos-service:
     build: ./backend/services/contratos-service
@@ -151,9 +195,14 @@ services:
     environment:
       DATABASE_URL: postgresql://frella:frella@postgres-contratos:5432/contratos_db
       PORT: 3002
+      RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
     depends_on:
       postgres-contratos:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - frella_net
 
   propostas-service:
     build: ./backend/services/propostas-service
@@ -163,9 +212,14 @@ services:
     environment:
       DATABASE_URL: postgresql://frella:frella@postgres-propostas:5432/propostas_db
       PORT: 3004
+      RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
     depends_on:
       postgres-propostas:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - frella_net
 
   avaliacoes-service:
     build: ./backend/services/avaliacoes-service
@@ -175,9 +229,14 @@ services:
     environment:
       DATABASE_URL: postgresql://frella:frella@postgres-avaliacoes:5432/avaliacoes_db
       PORT: 3005
+      RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
     depends_on:
       postgres-avaliacoes:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - frella_net
 
   auth-service:
     build: ./backend/services/auth-service
@@ -191,20 +250,12 @@ services:
     depends_on:
       postgres-auth:
         condition: service_healthy
-        
-  rabbitmq:
-      image: rabbitmq:3-management
-      container_name: frella-rabbitmq
-      ports:
-        - "5672:5672"    # porta da aplicação
-        - "15672:15672"  # painel web (acessa no browser depois)
-      environment:
-        RABBITMQ_DEFAULT_USER: frella
-        RABBITMQ_DEFAULT_PASS: frella
-      healthcheck:
-        test: ["CMD", "rabbitmq-diagnostics", "ping"]
-        interval: 10s
-        retries: 5
+    networks:
+      - frella_net
+
+# ────────────────────────────────────────
+#  Volumes e Redes
+# ────────────────────────────────────────
 
 volumes:
   postgres_clientes_data:
@@ -213,3 +264,7 @@ volumes:
   postgres_propostas_data:
   postgres_avaliacoes_data:
   postgres_auth_data:
+
+networks:
+  frella_net:
+    driver: bridge

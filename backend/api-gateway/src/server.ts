@@ -1,36 +1,69 @@
 import express from "express";
 import cors from "cors";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import rateLimit from "express-rate-limit";
 import { auth } from "./middlewares/authMiddleware";
-
 import { logger } from "./middlewares/loggerMiddleware";
 import { errorHandler } from "./middlewares/errorMiddleware";
-
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger";
 
 const app = express();
 
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 app.use(cors());
 app.use(express.json());
 app.use(logger);
 
+// ── Rate Limiting ─────────────────────────────────────────
+// Limite global: 100 requisições por IP a cada 15 minutos
+const limiterGlobal = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Muitas requisições. Tente novamente em 15 minutos.",
+  },
+});
+
+// Limite mais restrito para rotas de autenticação
+// Evita ataques de força bruta em login/register
+const limiterAuth = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Muitas tentativas de autenticação. Tente novamente em 15 minutos.",
+  },
+});
+
+app.use(limiterGlobal);
+
+// ── Documentação ──────────────────────────────────────────
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// ── Health check do Gateway ───────────────────────────────
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", service: "api-gateway" });
+});
+
+// ── Rota pública — Auth (sem autenticação) ────────────────
 app.use(
-  "/api/v1/clientes",
-  auth,                          
+  "/api/v1/auth",
+  limiterAuth,
   createProxyMiddleware({
-    target: "http://clientes-service:3001",
+    target: "http://auth-service:3006",
     changeOrigin: true,
   })
 );
 
+// ── Rotas protegidas — exigem JWT válido ──────────────────
 app.use(
-  "/api/v1/contratos",
+  "/api/v1/clientes",
   auth,
   createProxyMiddleware({
-    target: "http://contratos-service:3002",
+    target: "http://clientes-service:3001",
     changeOrigin: true,
   })
 );
@@ -40,6 +73,15 @@ app.use(
   auth,
   createProxyMiddleware({
     target: "http://prestadores-service:3003",
+    changeOrigin: true,
+  })
+);
+
+app.use(
+  "/api/v1/contratos",
+  auth,
+  createProxyMiddleware({
+    target: "http://contratos-service:3002",
     changeOrigin: true,
   })
 );
@@ -62,18 +104,16 @@ app.use(
   })
 );
 
-app.use(
-  "/api/v1/auth",
-  createProxyMiddleware({
-    target: "http://auth-service:3006",
-    changeOrigin: true,
-  })
-);
+// ── Rota não encontrada ───────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ error: "Rota não encontrada no Gateway" });
+});
 
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`API Gateway rodando na porta ${PORT}`);
+  console.log(`[Gateway] Rodando na porta ${PORT}`);
+  console.log(`[Gateway] Documentação em http://localhost:${PORT}/docs`);
 });

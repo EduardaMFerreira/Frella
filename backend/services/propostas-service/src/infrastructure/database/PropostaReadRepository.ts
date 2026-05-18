@@ -43,10 +43,34 @@ export const PropostaReadRepository = {
     return result.rows[0] ?? null;
   },
 
-  async listarTodas(): Promise<PropostaReadModel[]> {
+  // ✅ Filtros direto no banco — mais eficiente que filtrar em memória
+  async listarTodas(filtros?: {
+    cliente_id?: string;
+    prestador_id?: string;
+  }): Promise<PropostaReadModel[]> {
+    const condicoes: string[] = [];
+    const valores: string[] = [];
+    let indice = 1;
+
+    if (filtros?.cliente_id) {
+      condicoes.push(`cliente_id = $${indice++}`);
+      valores.push(filtros.cliente_id);
+    }
+
+    if (filtros?.prestador_id) {
+      condicoes.push(`prestador_id = $${indice++}`);
+      valores.push(filtros.prestador_id);
+    }
+
+    const where = condicoes.length > 0
+      ? `WHERE ${condicoes.join(' AND ')}`
+      : '';
+
     const result = await pool.query(
-      `SELECT * FROM propostas_read_model ORDER BY criada_em DESC`
+      `SELECT * FROM propostas_read_model ${where} ORDER BY criada_em DESC`,
+      valores
     );
+
     return result.rows;
   },
 };

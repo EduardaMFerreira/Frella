@@ -2,6 +2,11 @@ import request from "supertest";
 import app from "../app";
 import { ContratoRepository } from "../infrastructure/database/ContratoRepository";
 
+jest.mock("../infrastructure/messaging/rabbitmq/RabbitMQConnection", () => ({
+  publishEvent: jest.fn().mockResolvedValue(undefined),
+  getRabbitMQChannel: jest.fn().mockResolvedValue({}),
+}));
+
 jest.mock("../infrastructure/database/ContratoRepository");
 
 const mockContrato = {
