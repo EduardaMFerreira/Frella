@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Frella WS Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: #fff; }
+    h2 { color: #4fc3f7; }
+    input { padding: 8px; width: 400px; border-radius: 4px; border: none; }
+    button { padding: 8px 16px; margin-left: 8px; background: #4fc3f7; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    #status { margin: 10px 0; font-weight: bold; }
+    .conectado { color: #69f0ae; }
+    .desconectado { color: #ff5252; }
+    pre { background: #111; color: #69f0ae; padding: 15px; height: 400px; overflow: auto; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h2>Frella WebSocket Test Client</h2>
+  <div id="status" class="desconectado">● Desconectado</div>
+
+  <div style="margin: 10px 0">
+    <input id="sala" value="cliente:550e8400-e29b-41d4-a716-446655440000" />
+    <button onclick="inscrever()">Inscrever na Sala</button>
+    <button onclick="cancelar()">Cancelar Inscrição</button>
+  </div>
+
+  <pre id="log"></pre>
+
+  <script>
+    const log = document.getElementById('log');
+    const status = document.getElementById('status');
+    const ws = new WebSocket('ws://localhost:3004');
+
+    const add = (msg) => {
+      log.textContent += JSON.stringify(msg, null, 2) + '\n---\n';
+      log.scrollTop = log.scrollHeight;
+    };
+
+    ws.onopen = () => {
+      status.textContent = '● Conectado';
+      status.className = 'conectado';
+      add({ status: 'CONECTADO' });
+    };
+
+    ws.onclose = () => {
+      status.textContent = '● Desconectado';
+      status.className = 'desconectado';
+      add({ status: 'DESCONECTADO' });
+    };
+
+    ws.onerror = () => add({ status: 'ERRO NA CONEXÃO' });
+
+    ws.onmessage = (e) => add(JSON.parse(e.data));
+
+    function inscrever() {
+      const sala = document.getElementById('sala').value;
+      ws.send(JSON.stringify({ tipo: 'inscrever', sala }));
+    }
+
+    function cancelar() {
+      const sala = document.getElementById('sala').value;
+      ws.send(JSON.stringify({ tipo: 'cancelar', sala }));
+    }
+  </script>
+</body>
+</html>

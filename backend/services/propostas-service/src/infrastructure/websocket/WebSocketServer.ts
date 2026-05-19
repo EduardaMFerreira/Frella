@@ -1,5 +1,6 @@
 import { WebSocketServer as WSS, WebSocket } from 'ws';
 import { Server } from 'http';
+import { entrarNaSala, sairDaSala, limparSalasDoCliente } from './WebSocketRoomManager';
 
 let wss: WSS;
 
@@ -12,7 +13,25 @@ export function iniciarWebSocketServer(server: Server): void {
     (ws as any).isAlive = true;
     ws.on('pong', () => { (ws as any).isAlive = true; });
 
+    ws.on('message', (data) => {
+      try {
+        const msg = JSON.parse(data.toString());
+
+        if (msg.tipo === 'inscrever') {
+          entrarNaSala(msg.sala, ws);
+          ws.send(JSON.stringify({ tipo: 'inscrito', sala: msg.sala }));
+        }
+
+        if (msg.tipo === 'cancelar') {
+          sairDaSala(msg.sala, ws);
+        }
+      } catch {
+        console.error('[WS] Mensagem inválida recebida');
+      }
+    });
+
     ws.on('close', () => {
+      limparSalasDoCliente(ws);
       console.log('[WS] Cliente desconectado. Total:', wss.clients.size);
     });
 
@@ -23,7 +42,6 @@ export function iniciarWebSocketServer(server: Server): void {
     ws.send(JSON.stringify({ tipo: 'conexao', mensagem: 'Conectado ao Frella WS!' }));
   });
 
-  // Heartbeat a cada 30 segundos
   const intervalo = setInterval(() => {
     wss.clients.forEach((ws: any) => {
       if (ws.isAlive === false) {
@@ -36,7 +54,6 @@ export function iniciarWebSocketServer(server: Server): void {
   }, 30000);
 
   wss.on('close', () => clearInterval(intervalo));
-
   console.log('[WS] Servidor WebSocket iniciado');
 }
 
