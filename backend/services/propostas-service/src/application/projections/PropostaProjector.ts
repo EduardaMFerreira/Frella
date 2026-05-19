@@ -1,3 +1,4 @@
+import { broadcast } from '../../infrastructure/websocket/WebSocketServer';
 import { pool } from '../../infrastructure/database/connection';
 import { PropostaReadRepository } from '../../infrastructure/database/PropostaReadRepository';
 import { PropostaCriadaEvent } from '../../infrastructure/messaging/events/PropostaCriadaEvent';
@@ -27,7 +28,6 @@ export async function PropostaProjector(
 ): Promise<void> {
   console.log('[Projector] Processando evento:', evento.tipo);
 
-  // ✅ Idempotência — ignora se já foi processado antes
   if (await eventoJaProcessado(eventoId)) {
     console.warn('[Projector] Evento já processado, ignorando:', eventoId);
     return;
@@ -45,6 +45,8 @@ export async function PropostaProjector(
       criada_em: evento.created_at,
       atualizada_em: evento.created_at,
     });
+    // ✅ ADICIONAR AQUI — após o upsert
+    broadcast({ tipo: 'proposta.criada', dados: evento });
     console.log('[Projector] Proposta criada no Read Model:', evento.proposta_id);
   }
 
@@ -56,15 +58,18 @@ export async function PropostaProjector(
         status: evento.status,
         atualizada_em: evento.updated_at,
       });
+      // ✅ ADICIONAR AQUI — após o upsert
+      broadcast({ tipo: 'proposta.aceita', dados: evento });
       console.log('[Projector] Proposta aceita no Read Model:', evento.proposta_id);
     }
   }
 
   else if (evento.tipo === 'proposta.removida') {
     await PropostaReadRepository.remover(evento.proposta_id);
+    // ✅ ADICIONAR AQUI — após o remover
+    broadcast({ tipo: 'proposta.removida', dados: evento });
     console.log('[Projector] Proposta removida do Read Model:', evento.proposta_id);
   }
 
-  // ✅ Registra como processado somente após executar com sucesso
   await registrarEventoProcessado(eventoId, evento.tipo);
 }
