@@ -1,6 +1,9 @@
 import { PrestadorRepository } from "../../../infrastructure/database/PrestadorRepository";
 import { Especialidade } from "../../../domain/valueObjects/Especialidade";
 import { Prestador } from "../../../domain/entities/Prestador";
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
+
+const cache = new RedisCacheService();
 
 export interface CriarPrestadorDTO {
   nome: string;
@@ -20,7 +23,9 @@ export interface CriarPrestadorDTO {
   };
 }
 
-export async function CriarPrestadorUseCase(data: CriarPrestadorDTO): Promise<Prestador> {
+export async function CriarPrestadorUseCase(
+  data: CriarPrestadorDTO
+): Promise<Prestador> {
   if (!data.nome?.trim()) throw new Error("Nome é obrigatório");
   if (!data.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
     throw new Error("E-mail inválido");
@@ -30,10 +35,9 @@ export async function CriarPrestadorUseCase(data: CriarPrestadorDTO): Promise<Pr
   const existente = await PrestadorRepository.findByEmail(data.email);
   if (existente) throw new Error("E-mail já cadastrado");
 
-  // valida cada especialidade
   data.especialidades.map((e) => Especialidade.create(e).toString());
 
-  return PrestadorRepository.create({
+  const prestador = await PrestadorRepository.create({
     nome: data.nome.trim(),
     email: data.email.trim().toLowerCase(),
     telefone: data.telefone?.trim(),
@@ -42,4 +46,9 @@ export async function CriarPrestadorUseCase(data: CriarPrestadorDTO): Promise<Pr
     valor_hora: data.valor_hora,
     endereco: data.endereco,
   });
+
+  // Invalida lista em cache pois novo prestador foi criado
+  await cache.invalidatePattern('prestador:lista:*');
+
+  return prestador;
 }

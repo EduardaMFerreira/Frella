@@ -2,6 +2,9 @@ import { ClienteRepository } from "../../../infrastructure/database/ClienteRepos
 import { Endereco } from "../../../domain/valueObjects/Endereco";
 import { CriarClienteDTO } from "./CriarClienteDTO";
 import { Cliente } from "../../../domain/entities/Cliente";
+import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+
+const cache = new RedisCacheService();
 
 export async function CriarClienteUseCase(data: CriarClienteDTO): Promise<Cliente> {
   if (!data.nome?.trim()) throw new Error("Nome é obrigatório");
@@ -16,10 +19,15 @@ export async function CriarClienteUseCase(data: CriarClienteDTO): Promise<Client
     endereco = Endereco.create(data.endereco).toJSON();
   }
 
-  return ClienteRepository.create({
+  const cliente = await ClienteRepository.create({
     nome: data.nome.trim(),
     email: data.email.trim().toLowerCase(),
     telefone: data.telefone?.trim(),
     endereco,
   });
+
+  // Invalida lista em cache pois novo cliente foi criado
+  await cache.invalidatePattern('cliente:lista:*');
+
+  return cliente;
 }

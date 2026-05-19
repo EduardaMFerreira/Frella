@@ -6,6 +6,15 @@ jest.mock("../infrastructure/messaging/rabbitmq/RabbitMQConnection", () => ({
   getRabbitMQChannel: jest.fn().mockResolvedValue({}),
 }));
 
+jest.mock('../infrastructure/cache/RedisCacheService', () => ({
+  RedisCacheService: jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue(undefined),
+    invalidate: jest.fn().mockResolvedValue(undefined),
+    invalidatePattern: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 const mockProposta = {
   id: "123e4567-e89b-12d3-a456-426614174000",
   titulo: "Reforma banheiro",

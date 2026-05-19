@@ -3,6 +3,9 @@ import { StatusContrato } from "../../../domain/enums/StatusContrato";
 import { Contrato } from "../../../domain/entities/Contrato";
 import { publishEvent } from "../../../infrastructure/messaging/rabbitmq/RabbitMQConnection";
 import { ServicoFinalizadoEvent } from "../../../infrastructure/messaging/events/ServicoFinalizadoEvent";
+import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+
+const cache = new RedisCacheService();
 
 export async function FinalizarServicoUseCase(id: string): Promise<Contrato> {
   if (!id?.trim()) throw new Error("ID é obrigatório");
@@ -13,9 +16,10 @@ export async function FinalizarServicoUseCase(id: string): Promise<Contrato> {
   if (contrato.status !== StatusContrato.EM_ANDAMENTO)
     throw new Error("Apenas contratos em andamento podem ser finalizados");
 
-  const atualizado = await ContratoRepository.updateStatus(id, StatusContrato.FINALIZADO);
+  const atualizado = await ContratoRepository.updateStatus(
+    id, StatusContrato.FINALIZADO
+  );
 
-  // ✅ Publica evento no RabbitMQ
   const evento: ServicoFinalizadoEvent = {
     tipo: 'servico.finalizado',
     contrato_id: atualizado.id,
@@ -25,6 +29,10 @@ export async function FinalizarServicoUseCase(id: string): Promise<Contrato> {
     updated_at: atualizado.updated_at,
   };
   await publishEvent(evento);
+
+  // Invalida cache após atualização
+  await cache.invalidate(`contrato:item:${id}`);
+  await cache.invalidatePattern('contrato:lista:*');
 
   return atualizado;
 }
@@ -38,5 +46,13 @@ export async function CancelarContratoUseCase(id: string): Promise<Contrato> {
   if (contrato.status === StatusContrato.FINALIZADO)
     throw new Error("Contratos finalizados não podem ser cancelados");
 
-  return ContratoRepository.updateStatus(id, StatusContrato.CANCELADO);
+  const atualizado = await ContratoRepository.updateStatus(
+    id, StatusContrato.CANCELADO
+  );
+
+  // Invalida cache após cancelamento
+  await cache.invalidate(`contrato:item:${id}`);
+  await cache.invalidatePattern('contrato:lista:*');
+
+  return atualizado;
 }

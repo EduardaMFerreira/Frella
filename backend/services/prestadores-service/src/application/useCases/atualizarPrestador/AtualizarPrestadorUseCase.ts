@@ -1,5 +1,8 @@
 import { PrestadorRepository } from "../../../infrastructure/database/PrestadorRepository";
 import { Prestador } from "../../../domain/entities/Prestador";
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
+
+const cache = new RedisCacheService();
 
 export async function AtualizarPrestadorUseCase(
   id: string,
@@ -13,7 +16,13 @@ export async function AtualizarPrestadorUseCase(
     if (comMesmoEmail) throw new Error("E-mail já cadastrado");
   }
 
-  return PrestadorRepository.update(id, data);
+  const atualizado = await PrestadorRepository.update(id, data);
+
+  // Invalida cache após atualização
+  await cache.invalidate(`prestador:item:${id}`);
+  await cache.invalidatePattern('prestador:lista:*');
+
+  return atualizado;
 }
 
 export async function RemoverPrestadorUseCase(id: string): Promise<void> {
@@ -21,4 +30,8 @@ export async function RemoverPrestadorUseCase(id: string): Promise<void> {
   if (!existente) throw new Error("Prestador não encontrado");
 
   await PrestadorRepository.remove(id);
+
+  // Invalida cache após remoção
+  await cache.invalidate(`prestador:item:${id}`);
+  await cache.invalidatePattern('prestador:lista:*');
 }

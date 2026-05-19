@@ -4,6 +4,9 @@ import { StatusContrato } from "../../../domain/enums/StatusContrato";
 import { Contrato } from "../../../domain/entities/Contrato";
 import { publishEvent } from "../../../infrastructure/messaging/rabbitmq/RabbitMQConnection";
 import { ContratoCriadoEvent } from "../../../infrastructure/messaging/events/ContratoCriadoEvent";
+import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+
+const cache = new RedisCacheService();
 
 export interface CriarContratoDTO {
   cliente_id: string;
@@ -14,7 +17,9 @@ export interface CriarContratoDTO {
   data_fim: string;
 }
 
-export async function CriarContratoUseCase(data: CriarContratoDTO): Promise<Contrato> {
+export async function CriarContratoUseCase(
+  data: CriarContratoDTO
+): Promise<Contrato> {
   if (!data.cliente_id?.trim()) throw new Error("cliente_id é obrigatório");
   if (!data.prestador_id?.trim()) throw new Error("prestador_id é obrigatório");
   if (!data.descricao?.trim()) throw new Error("Descrição é obrigatória");
@@ -32,7 +37,7 @@ export async function CriarContratoUseCase(data: CriarContratoDTO): Promise<Cont
     status: StatusContrato.PENDENTE,
   });
 
-  // ✅ Publica evento no RabbitMQ
+  // Publica evento
   const evento: ContratoCriadoEvent = {
     tipo: 'contrato.criado',
     contrato_id: contrato.id,
@@ -46,6 +51,9 @@ export async function CriarContratoUseCase(data: CriarContratoDTO): Promise<Cont
     created_at: contrato.created_at,
   };
   await publishEvent(evento);
+
+  // Invalida lista em cache
+  await cache.invalidatePattern('contrato:lista:*');
 
   return contrato;
 }
