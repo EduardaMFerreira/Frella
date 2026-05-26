@@ -1,13 +1,13 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
-
 import avaliacoesRoutes from "./routes/avaliacoes.routes";
-
 import { runMigrations } from "./infrastructure/database/migrate";
+import { correlationIdMiddleware } from '../../../../shared/correlationIdMiddleware';
+import { httpLoggerMiddleware } from '../../../../shared/httpLoggerMiddleware';
+import { logger } from './infrastructure/logger';
 
 dotenv.config();
 
@@ -15,6 +15,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use(correlationIdMiddleware);
+app.use(httpLoggerMiddleware(logger));
 
 const swaggerSpec = swaggerJsdoc({
   definition: {
@@ -27,40 +30,18 @@ const swaggerSpec = swaggerJsdoc({
   apis: ["./src/routes/*.ts"],
 });
 
-/*
-  DOCS PRIMEIRO
-*/
-app.use(
-  "/docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
-);
-
-/*
-  ROTAS DEPOIS
-*/
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/", avaliacoesRoutes);
 
 const PORT = process.env.PORT || 3005;
 
 runMigrations()
   .then(() => {
-
     app.listen(PORT, () => {
-
-      console.log(
-        `Avaliacoes service rodando na porta ${PORT}`
-      );
-
+      logger.info('Serviço iniciado', { port: PORT });
     });
-
   })
   .catch((err) => {
-
-    console.error(
-      "Erro ao executar migrations:",
-      err
-    );
-
+    logger.error('Erro ao executar migrations', { error: err.message });
     process.exit(1);
   });

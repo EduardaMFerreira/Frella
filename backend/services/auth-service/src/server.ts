@@ -1,7 +1,14 @@
 import app from "./app";
 import { pool } from "./infrastructure/database/connection";
+import { correlationIdMiddleware } from '../../../../shared/correlationIdMiddleware';
+import { httpLoggerMiddleware } from '../../../../shared/httpLoggerMiddleware';
+import { logger } from './infrastructure/logger';
 
+// PORT declarado antes de usar
 const PORT = process.env.PORT || 3006;
+
+app.use(correlationIdMiddleware);
+app.use(httpLoggerMiddleware(logger));
 
 app.listen(PORT, async () => {
   await pool.query(`
@@ -13,5 +20,5 @@ app.listen(PORT, async () => {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
-  console.log(`Auth service rodando na porta ${PORT}`);
+  logger.info('Serviço iniciado', { port: PORT }); // substituiu o console.log
 });

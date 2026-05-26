@@ -3,7 +3,7 @@ import cors from "cors";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import rateLimit from "express-rate-limit";
 import { auth } from "./middlewares/authMiddleware";
-import { logger } from "./middlewares/loggerMiddleware";
+import { loggerMiddleware, logger } from "./middlewares/loggerMiddleware";
 import { errorHandler } from "./middlewares/errorMiddleware";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger";
@@ -12,12 +12,11 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(logger);
+app.use(loggerMiddleware);
 
 // ── Rate Limiting ─────────────────────────────────────────
-// Limite global: 100 requisições por IP a cada 15 minutos
 const limiterGlobal = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
+  windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
@@ -26,10 +25,8 @@ const limiterGlobal = rateLimit({
   },
 });
 
-// Limite mais restrito para rotas de autenticação
-// Evita ataques de força bruta em login/register
 const limiterAuth = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
+  windowMs: 15 * 60 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
@@ -114,6 +111,6 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`[Gateway] Rodando na porta ${PORT}`);
-  console.log(`[Gateway] Documentação em http://localhost:${PORT}/docs`);
+  logger.info('Gateway iniciado', { port: PORT });
+  logger.info(`Documentação disponível em http://localhost:${PORT}/docs`);
 });

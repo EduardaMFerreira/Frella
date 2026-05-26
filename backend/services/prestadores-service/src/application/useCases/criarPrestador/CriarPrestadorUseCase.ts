@@ -2,6 +2,7 @@ import { PrestadorRepository } from "../../../infrastructure/database/PrestadorR
 import { Especialidade } from "../../../domain/valueObjects/Especialidade";
 import { Prestador } from "../../../domain/entities/Prestador";
 import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
+import { logger } from "../../../infrastructure/logger";
 
 const cache = new RedisCacheService();
 
@@ -26,14 +27,26 @@ export interface CriarPrestadorDTO {
 export async function CriarPrestadorUseCase(
   data: CriarPrestadorDTO
 ): Promise<Prestador> {
-  if (!data.nome?.trim()) throw new Error("Nome é obrigatório");
-  if (!data.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
+  logger.info('Iniciando criação de prestador', { email: data.email });
+
+  if (!data.nome?.trim()) {
+    logger.warn('Criação de prestador sem nome');
+    throw new Error("Nome é obrigatório");
+  }
+  if (!data.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    logger.warn('Criação de prestador com e-mail inválido', { email: data.email });
     throw new Error("E-mail inválido");
-  if (!data.especialidades?.length)
+  }
+  if (!data.especialidades?.length) {
+    logger.warn('Criação de prestador sem especialidades');
     throw new Error("Informe pelo menos uma especialidade");
+  }
 
   const existente = await PrestadorRepository.findByEmail(data.email);
-  if (existente) throw new Error("E-mail já cadastrado");
+  if (existente) {
+    logger.warn('Tentativa de cadastro com e-mail já existente', { email: data.email });
+    throw new Error("E-mail já cadastrado");
+  }
 
   data.especialidades.map((e) => Especialidade.create(e).toString());
 
@@ -47,8 +60,12 @@ export async function CriarPrestadorUseCase(
     endereco: data.endereco,
   });
 
-  // Invalida lista em cache pois novo prestador foi criado
   await cache.invalidatePattern('prestador:lista:*');
+
+  logger.info('Prestador criado com sucesso', {
+    prestadorId: prestador.id,
+    especialidades: data.especialidades,
+  });
 
   return prestador;
 }

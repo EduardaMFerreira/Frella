@@ -5,6 +5,7 @@ import { Contrato } from "../../../domain/entities/Contrato";
 import { publishEvent } from "../../../infrastructure/messaging/rabbitmq/RabbitMQConnection";
 import { ContratoCriadoEvent } from "../../../infrastructure/messaging/events/ContratoCriadoEvent";
 import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+import { logger } from "../../../infrastructure/logger";
 
 const cache = new RedisCacheService();
 
@@ -20,10 +21,28 @@ export interface CriarContratoDTO {
 export async function CriarContratoUseCase(
   data: CriarContratoDTO
 ): Promise<Contrato> {
-  if (!data.cliente_id?.trim()) throw new Error("cliente_id é obrigatório");
-  if (!data.prestador_id?.trim()) throw new Error("prestador_id é obrigatório");
-  if (!data.descricao?.trim()) throw new Error("Descrição é obrigatória");
-  if (!data.valor || data.valor <= 0) throw new Error("Valor deve ser maior que zero");
+  logger.info('Iniciando criação de contrato', {
+    clienteId: data.cliente_id,
+    prestadorId: data.prestador_id,
+    valor: data.valor,
+  });
+
+  if (!data.cliente_id?.trim()) {
+    logger.warn('Criação de contrato sem cliente_id');
+    throw new Error("cliente_id é obrigatório");
+  }
+  if (!data.prestador_id?.trim()) {
+    logger.warn('Criação de contrato sem prestador_id');
+    throw new Error("prestador_id é obrigatório");
+  }
+  if (!data.descricao?.trim()) {
+    logger.warn('Criação de contrato sem descrição');
+    throw new Error("Descrição é obrigatória");
+  }
+  if (!data.valor || data.valor <= 0) {
+    logger.warn('Criação de contrato com valor inválido', { valor: data.valor });
+    throw new Error("Valor deve ser maior que zero");
+  }
 
   const periodo = PeriodoServico.create(data.data_inicio, data.data_fim);
 
@@ -37,7 +56,6 @@ export async function CriarContratoUseCase(
     status: StatusContrato.PENDENTE,
   });
 
-  // Publica evento
   const evento: ContratoCriadoEvent = {
     tipo: 'contrato.criado',
     contrato_id: contrato.id,
@@ -50,10 +68,13 @@ export async function CriarContratoUseCase(
     status: contrato.status,
     created_at: contrato.created_at,
   };
-  await publishEvent(evento);
 
-  // Invalida lista em cache
+  await publishEvent(evento);
+  logger.info('Evento contrato.criado publicado', { contratoId: contrato.id });
+
   await cache.invalidatePattern('contrato:lista:*');
+
+  logger.info('Contrato criado com sucesso', { contratoId: contrato.id });
 
   return contrato;
 }
