@@ -40,7 +40,24 @@ app.use(limiterGlobal);
 // ── Documentação ──────────────────────────────────────────
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// ── Health check do Gateway ───────────────────────────────
+// ── Health checks do Gateway ──────────────────────────────
+app.get("/health/live", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "api-gateway",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get("/health/ready", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "api-gateway",
+    timestamp: new Date().toISOString(),
+    dependencies: {},
+  });
+});
+
 app.get("/health", (req, res) => {
   res.json({ status: "ok", service: "api-gateway" });
 });
