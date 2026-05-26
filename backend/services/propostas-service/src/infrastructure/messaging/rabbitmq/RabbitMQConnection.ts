@@ -67,13 +67,17 @@ export async function getRabbitMQChannel(): Promise<Channel> {
   return channel;
 }
 
+import { resilientPolicy } from '../../resilience/ResiliencePolicy';
+
 export async function publishEvent(event: object): Promise<void> {
-  const ch = await getRabbitMQChannel();
-  ch.publish(
-    PROPOSTA_EXCHANGE,
-    '',
-    Buffer.from(JSON.stringify(event)),
-    { persistent: true }
-  );
-  console.log('[RabbitMQ] Evento publicado no Exchange:', JSON.stringify(event));
+  await resilientPolicy.execute(async () => {
+    const ch = await getRabbitMQChannel();
+    ch.publish(
+      PROPOSTA_EXCHANGE,
+      '',
+      Buffer.from(JSON.stringify(event)),
+      { persistent: true }
+    );
+    console.log('[RabbitMQ] Evento publicado no Exchange:', JSON.stringify(event));
+  });
 }

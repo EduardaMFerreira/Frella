@@ -1,4 +1,4 @@
-import { PropostaRepository } from "../../../infrastructure/database/PropostaRepository";
+import { PropostaRepositoryResilient } from "../../../infrastructure/database/PropostaRepositoryResilient";
 import { validarCriarProposta } from "../../validators/CriarPropostaValidator";
 import { CriarPropostaCommand } from "./CriarPropostaCommand";
 import { Proposta } from "../../../domain/entities/Proposta";
@@ -13,10 +13,8 @@ export class CriarPropostaHandler {
       prestadorId: cmd.prestador_id,
       valor: cmd.valor,
     });
-
     validarCriarProposta(cmd);
-
-    const proposta = await PropostaRepository.create({
+    const proposta = await PropostaRepositoryResilient.create({
       titulo: cmd.titulo,
       descricao: cmd.descricao,
       valor: cmd.valor,
@@ -24,7 +22,6 @@ export class CriarPropostaHandler {
       cliente_id: cmd.cliente_id,
       prestador_id: cmd.prestador_id,
     });
-
     const evento: PropostaCriadaEvent = {
       tipo: 'proposta.criada',
       proposta_id: proposta.id,
@@ -36,12 +33,9 @@ export class CriarPropostaHandler {
       prestador_id: proposta.prestador_id,
       created_at: proposta.created_at,
     };
-
     await publishEvent(evento);
     logger.info('Evento proposta.criada publicado', { propostaId: proposta.id });
-
     logger.info('Proposta criada com sucesso', { propostaId: proposta.id });
-
     return proposta;
   }
 }

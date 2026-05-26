@@ -1,4 +1,4 @@
-import { PropostaRepository } from "../../../infrastructure/database/PropostaRepository";
+import { PropostaRepositoryResilient } from "../../../infrastructure/database/PropostaRepositoryResilient";
 import { RemoverPropostaCommand } from "./RemoverPropostaCommand";
 import { publishEvent } from "../../../infrastructure/messaging/rabbitmq/RabbitMQConnection";
 import { PropostaRemovidaEvent } from "../../../infrastructure/messaging/events/PropostaRemovidaEvent";
@@ -9,13 +9,13 @@ export async function RemoverPropostaHandler(
 ): Promise<void> {
   logger.info('Iniciando remoção de proposta', { propostaId: command.id });
 
-  const proposta = await PropostaRepository.findById(command.id);
+  const proposta = await PropostaRepositoryResilient.findById(command.id);
   if (!proposta) {
     logger.warn('Proposta não encontrada para remoção', { propostaId: command.id });
     throw new Error("Proposta não encontrada");
   }
 
-  await PropostaRepository.remove(command.id);
+  await PropostaRepositoryResilient.remove(command.id);
 
   const evento: PropostaRemovidaEvent = {
     tipo: 'proposta.removida',
@@ -24,6 +24,5 @@ export async function RemoverPropostaHandler(
 
   await publishEvent(evento);
   logger.info('Evento proposta.removida publicado', { propostaId: command.id });
-
   logger.info('Proposta removida com sucesso', { propostaId: command.id });
 }
