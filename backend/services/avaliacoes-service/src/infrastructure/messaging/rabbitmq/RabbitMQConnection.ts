@@ -1,4 +1,6 @@
 import amqp, { Channel, Connection } from 'amqplib';
+import { logger } from '../../logger';
+import { resilientPolicy } from '../../resilience/ResiliencePolicy'
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://frella:frella@localhost:5672';
 export const AVALIACAO_EXCHANGE = 'avaliacao.eventos';
@@ -13,7 +15,7 @@ async function conectar(tentativa = 1): Promise<void> {
   const ESPERA_MS = Math.min(1000 * tentativa, 15000);
 
   try {
-    console.log(`[RabbitMQ-Avaliacoes] Tentativa ${tentativa} de conexão...`);
+    logger.info(`[RabbitMQ-Avaliacoes] Tentativa ${tentativa} de conexão...`);
     connection = await amqp.connect(RABBITMQ_URL);
     channel = await connection.createChannel();
 
@@ -31,25 +33,25 @@ async function conectar(tentativa = 1): Promise<void> {
     await channel.bindQueue(AVALIACAO_QUEUE, AVALIACAO_EXCHANGE, '');
 
     connection.on('close', () => {
-      console.warn('[RabbitMQ-Avaliacoes] Conexão encerrada. Reconectando...');
+      logger.warn('[RabbitMQ-Avaliacoes] Conexão encerrada. Reconectando...');
       channel = null as any;
       connection = null as any;
       setTimeout(() => conectar(1), 2000);
     });
 
     connection.on('error', (err) => {
-      console.error('[RabbitMQ-Avaliacoes] Erro na conexão:', err.message);
+      logger.error('[RabbitMQ-Avaliacoes] Erro na conexão', { error: err.message });
     });
 
-    console.log('[RabbitMQ-Avaliacoes] Conectado com sucesso!');
+    logger.info('[RabbitMQ-Avaliacoes] Conectado com sucesso!');
   } catch (err: any) {
-    console.error(`[RabbitMQ-Avaliacoes] Falha na tentativa ${tentativa}:`, err.message);
+    logger.error(`[RabbitMQ-Avaliacoes] Falha na tentativa ${tentativa}`, { error: err.message });
 
     if (tentativa >= MAX_TENTATIVAS) {
       throw new Error('[RabbitMQ-Avaliacoes] Número máximo de tentativas atingido.');
     }
 
-    console.log(`[RabbitMQ-Avaliacoes] Aguardando ${ESPERA_MS}ms...`);
+    logger.info(`[RabbitMQ-Avaliacoes] Aguardando ${ESPERA_MS}ms antes de tentar novamente...`);
     await new Promise((resolve) => setTimeout(resolve, ESPERA_MS));
     await conectar(tentativa + 1);
   }
@@ -62,12 +64,14 @@ export async function getRabbitMQChannel(): Promise<Channel> {
 }
 
 export async function publishEvent(event: object): Promise<void> {
-  const ch = await getRabbitMQChannel();
-  ch.publish(
-    AVALIACAO_EXCHANGE,
-    '',
-    Buffer.from(JSON.stringify(event)),
-    { persistent: true }
-  );
-  console.log('[RabbitMQ-Avaliacoes] Evento publicado:', JSON.stringify(event));
+  await resilientPolicy.execute(async () => {
+    const ch = await getRabbitMQChannel();
+    ch.publish(
+      AVALIACAO_EXCHANGE,
+      '',
+      Buffer.from(JSON.stringify(event)),
+      { persistent: true }
+    );
+    logger.info('[RabbitMQ-Avaliacoes] Evento publicado', { event });
+  });
 }

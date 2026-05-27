@@ -10,34 +10,29 @@ import {
 } from 'cockatiel';
 import { logger } from '../logger';
 
-// ── Retry com backoff exponencial ───────────────────────────────────────
 export const retryPolicy = retry(handleAll, {
   maxAttempts: 3,
   backoff: new ExponentialBackoff({ initialDelay: 200, maxDelay: 5000 }),
 });
 
-// ── Circuit Breaker — abre após 5 falhas consecutivas ───────────────────
 export const circuitBreakerPolicy = circuitBreaker(handleAll, {
   halfOpenAfter: 10_000,
   breaker: new ConsecutiveBreaker(5),
 });
 
-// ── Timeout — cancela chamadas que demoram mais de 5s ───────────────────
 export const timeoutPolicy = timeout(5_000, TimeoutStrategy.Aggressive);
 
-// ── Política combinada ──────────────────────────────────────────────────
 export const resilientPolicy = wrap(timeoutPolicy, retryPolicy, circuitBreakerPolicy);
 
-// ── Eventos de log ──────────────────────────────────────────────────────
-retryPolicy.onRetry((reason) =>
+retryPolicy.onRetry((reason: any) =>
   logger.warn('[Resilience] Retentativa após falha', {
-    error: (reason as any).error?.message,
+    error: reason.error?.message,
   })
 );
 
-circuitBreakerPolicy.onBreak((reason) =>
+circuitBreakerPolicy.onBreak((reason: any) =>
   logger.error('[Resilience] Circuit Breaker ABERTO', {
-    error: (reason as any).error?.message,
+    error: reason.error?.message,
   })
 );
 
