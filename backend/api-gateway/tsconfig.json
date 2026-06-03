@@ -7,6 +7,10 @@
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "paths": {
+      "winston": ["./node_modules/winston/index.d.ts"],
+      "express": ["./node_modules/@types/express/index.d.ts"],
+      "uuid": ["./node_modules/@types/uuid/index.d.ts"]
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { ClienteRepository } from "../../../infrastructure/database/ClienteRepository";
 import { Cliente } from "../../../domain/entities/Cliente";
-import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
 
 const cache = new RedisCacheService();
