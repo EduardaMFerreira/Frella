@@ -46,6 +46,10 @@ jobs:
           cache: "npm"
           cache-dependency-path: backend/services/auth-service/package-lock.json
 
+      - name: "📦 Instalar dependências do shared"
+        run: npm install
+        working-directory: shared
+
       - name: "📦 Instalar dependências"
         run: npm ci
 

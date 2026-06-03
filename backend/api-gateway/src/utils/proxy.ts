@@ -4,6 +4,5 @@ export function createServiceProxy(target: string) {
   return createProxyMiddleware({
     target,
     changeOrigin: true,
-    logLevel: "debug"
   });
 }
