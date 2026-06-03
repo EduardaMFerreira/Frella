@@ -1,0 +1,229 @@
+name: "CI · Pessoa A (Auth / Clientes / Prestadores / Gateway)"
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "backend/api-gateway/**"
+      - "backend/services/auth-service/**"
+      - "backend/services/clientes-service/**"
+      - "backend/services/prestadores-service/**"
+      - "shared/**"
+      - ".github/workflows/ci-pessoa-a.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "backend/api-gateway/**"
+      - "backend/services/auth-service/**"
+      - "backend/services/clientes-service/**"
+      - "backend/services/prestadores-service/**"
+      - "shared/**"
+      - ".github/workflows/ci-pessoa-a.yml"
+
+concurrency:
+  group: pessoa-a-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+
+  auth-ci:
+    name: "Auth Service — Build & Test"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/services/auth-service
+    steps:
+      - name: "📥 Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "🟢 Configurar Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/services/auth-service/package-lock.json
+
+      - name: "📦 Instalar dependências"
+        run: npm ci
+
+      - name: "🔨 Compilar TypeScript"
+        run: npm run build
+
+      - name: "🧪 Executar testes com cobertura"
+        run: npm run test:coverage -- --ci --forceExit
+        env:
+          DATABASE_URL: "postgresql://mock:mock@localhost:5432/auth_db"
+          JWT_SECRET: "ci-test-secret-not-real"
+          PORT: "3006"
+
+      - name: "📊 Upload do relatório de cobertura"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-auth
+          path: backend/services/auth-service/coverage/
+          retention-days: 7
+
+  clientes-ci:
+    name: "Clientes Service — Build & Test"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/services/clientes-service
+    steps:
+      - name: "📥 Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "🟢 Configurar Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/services/clientes-service/package-lock.json
+
+      - name: "📦 Instalar dependências"
+        run: npm ci
+
+      - name: "🔨 Compilar TypeScript"
+        run: npm run build
+
+      - name: "🧪 Executar testes com cobertura"
+        run: |
+          npx jest \
+            --ci \
+            --forceExit \
+            --coverage \
+            --coverageReporters=lcov \
+            --coverageReporters=text-summary \
+            --passWithNoTests
+        env:
+          DATABASE_URL: "postgresql://mock:mock@localhost:5432/clientes_db"
+          REDIS_URL: "redis://:mock@localhost:6379"
+          PORT: "3001"
+
+      - name: "📊 Upload do relatório de cobertura"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-clientes
+          path: backend/services/clientes-service/coverage/
+          retention-days: 7
+
+  prestadores-ci:
+    name: "Prestadores Service — Build & Test"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/services/prestadores-service
+    steps:
+      - name: "📥 Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "🟢 Configurar Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/services/prestadores-service/package-lock.json
+
+      - name: "📦 Instalar dependências"
+        run: npm ci
+
+      - name: "🔨 Compilar TypeScript"
+        run: npm run build
+
+      - name: "🧪 Executar testes com cobertura"
+        run: |
+          npx jest \
+            --ci \
+            --forceExit \
+            --coverage \
+            --coverageReporters=lcov \
+            --coverageReporters=text-summary \
+            --passWithNoTests
+        env:
+          DATABASE_URL: "postgresql://mock:mock@localhost:5432/prestadores_db"
+          REDIS_URL: "redis://:mock@localhost:6379"
+          PORT: "3003"
+
+      - name: "📊 Upload do relatório de cobertura"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-prestadores
+          path: backend/services/prestadores-service/coverage/
+          retention-days: 7
+
+  gateway-ci:
+    name: "API Gateway — Build & Type Check"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/api-gateway
+    steps:
+      - name: "📥 Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "🟢 Configurar Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/api-gateway/package-lock.json
+
+      - name: "📦 Instalar dependências"
+        run: npm ci
+
+      - name: "🔨 Compilar TypeScript"
+        run: npm run build
+
+  docker-build-a:
+    name: "Docker — Smoke Build (Pessoa A)"
+    runs-on: ubuntu-latest
+    needs: [auth-ci, clientes-ci, prestadores-ci, gateway-ci]
+    if: github.event_name == 'push'
+    steps:
+      - name: "📥 Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "🐳 Configurar Docker Buildx"
+        uses: docker/setup-buildx-action@v3
+
+      - name: "🐳 Build — auth-service"
+        uses: docker/build-push-action@v5
+        with:
+          context: backend/services/auth-service
+          push: false
+          tags: frella/auth-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: "🐳 Build — clientes-service"
+        uses: docker/build-push-action@v5
+        with:
+          context: backend/services/clientes-service
+          push: false
+          tags: frella/clientes-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: "🐳 Build — prestadores-service"
+        uses: docker/build-push-action@v5
+        with:
+          context: backend/services/prestadores-service
+          push: false
+          tags: frella/prestadores-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: "🐳 Build — api-gateway"
+        uses: docker/build-push-action@v5
+        with:
+          context: backend/api-gateway
+          push: false
+          tags: frella/api-gateway:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

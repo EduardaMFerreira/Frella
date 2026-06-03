@@ -4,12 +4,12 @@
   "main": "dist/server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "ts-node-dev --respawn src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "test": "jest",
-    "test:watch": "jest --watch"
-  },
+  "dev": "ts-node-dev --respawn src/server.ts",
+  "build": "tsc",
+  "start": "node dist/server.js",
+  "test": "jest --runInBand --forceExit",
+  "test:coverage": "jest --runInBand --forceExit --coverage"
+},
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",

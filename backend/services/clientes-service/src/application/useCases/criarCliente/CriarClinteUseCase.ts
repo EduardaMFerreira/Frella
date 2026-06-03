@@ -2,7 +2,7 @@ import { ClienteRepository } from "../../../infrastructure/database/ClienteRepos
 import { Endereco } from "../../../domain/valueObjects/Endereco";
 import { CriarClienteDTO } from "./CriarClienteDTO";
 import { Cliente } from "../../../domain/entities/Cliente";
-import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
 
 const cache = new RedisCacheService();
