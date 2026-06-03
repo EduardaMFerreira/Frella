@@ -3,7 +3,14 @@ const swaggerDocument = {
   info: {
     title: "Propostas Service",
     version: "1.0.0",
-    description: "Serviço responsável pelo gerenciamento de propostas entre clientes e prestadores",
+    description: `Serviço responsável pelo gerenciamento de propostas entre clientes e prestadores.
+
+---
+🔖 **Versão:** 1.0.0 | **Ambiente:** ${process.env.NODE_ENV || 'development'} | **Build:** ${new Date().toISOString().split('T')[0]}
+
+📡 **WebSocket:** ws://localhost:3004 — conecte-se para receber notificações em tempo real
+
+🏥 **Health:** [/health](http://localhost:3004/health) | 📊 **Version:** [/version](http://localhost:3004/version)`,
   },
   paths: {
     "/api/propostas": {
