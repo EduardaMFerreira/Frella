@@ -1,5 +1,6 @@
 import express from "express";
 import "dotenv/config";
+import cors from "cors";
 
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec as swaggerDocument } from "./config/swagger";
@@ -8,6 +9,8 @@ import prestadoresRoutes from "./routes/prestadores.routes";
 import { getReadinessStatus } from "./infrastructure/health/HealthService";
 
 const app = express();
+app.use(cors());        
+app.use(express.json());
 
 app.use(express.json());
 
