@@ -45,4 +45,13 @@ app.get("/ws/status", (req, res) => {
   });
 });
 
+app.get('/version', (req, res) => {
+  res.json({
+    version: process.env.npm_package_version || '1.0.0',
+    service: 'propostas-service',
+    environment: process.env.NODE_ENV || 'development',
+    buildDate: new Date().toISOString(),
+  });
+});
+
 export default app;
