@@ -3,7 +3,7 @@ import { CriarAvaliacaoDTO } from "./CriarAvaliacaoDTO";
 import { Avaliacao } from "../../../domain/entities/Avaliacao";
 import { publishEvent } from "../../../infrastructure/messaging/rabbitmq/RabbitMQConnection";
 import { AvaliacaoCriadaEvent } from "../../../infrastructure/messaging/events/AvaliacaoCriadaEvent";
-import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
 
 const cache = new RedisCacheService();

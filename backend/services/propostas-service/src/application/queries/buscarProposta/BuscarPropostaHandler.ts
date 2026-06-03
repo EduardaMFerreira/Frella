@@ -1,6 +1,6 @@
 import { PropostaReadRepository } from "../../../infrastructure/database/PropostaReadRepository";
 import { PropostaReadModel } from "../../readModel/PropostaReadModel";
-import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService"
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService"
 
 const cache = new RedisCacheService();
 const TTL_ITEM = 300; // 5 minutos
