@@ -3,7 +3,7 @@ import { StatusContrato } from "../../../domain/enums/StatusContrato";
 import { Contrato } from "../../../domain/entities/Contrato";
 import { publishEvent } from "../../../infrastructure/messaging/rabbitmq/RabbitMQConnection";
 import { ServicoFinalizadoEvent } from "../../../infrastructure/messaging/events/ServicoFinalizadoEvent";
-import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
 
 const cache = new RedisCacheService();

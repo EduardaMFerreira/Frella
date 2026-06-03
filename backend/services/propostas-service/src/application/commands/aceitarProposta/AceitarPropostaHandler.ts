@@ -3,7 +3,7 @@ import { AceitarPropostaCommand } from "./AceitarPropostaCommand";
 import { Proposta } from "../../../domain/entities/Proposta";
 import { publishEvent } from "../../../infrastructure/messaging/rabbitmq/RabbitMQConnection";
 import { PropostaAceitaEvent } from "../../../infrastructure/messaging/events/PropostaAceitaEvent";
-import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
 
 const cache = new RedisCacheService();

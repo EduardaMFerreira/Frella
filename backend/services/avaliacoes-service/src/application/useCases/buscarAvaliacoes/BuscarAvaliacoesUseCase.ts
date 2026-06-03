@@ -1,6 +1,6 @@
 import { AvaliacaoRepository } from "../../../infrastructure/database/AvaliacaoRepository";
 import { Avaliacao } from "../../../domain/entities/Avaliacao";
-import { RedisCacheService } from "../../../infrastructure/cache/RadisCacheService";
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
 
 const cache = new RedisCacheService();
