@@ -1,0 +1,302 @@
+name: "CI · Business Services (Contratos / Propostas / Avaliações)"
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "backend/services/contratos-service/**"
+      - "backend/services/propostas-service/**"
+      - "backend/services/avaliacoes-service/**"
+      - "shared/**"
+      - ".github/workflows/ci-business-services.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "backend/services/contratos-service/**"
+      - "backend/services/propostas-service/**"
+      - "backend/services/avaliacoes-service/**"
+      - "shared/**"
+      - ".github/workflows/ci-business-services.yml"
+
+concurrency:
+  group: ci-business-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+
+  contratos-ci:
+    name: "Contratos Service — Build & Test"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/services/contratos-service
+
+    steps:
+      - name: "Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "Configurar Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/services/contratos-service/package-lock.json
+
+      - name: "Instalar dependências"
+        run: npm ci
+
+      - name: "Compilar TypeScript"
+        run: npm run build
+
+      - name: "Executar testes com cobertura"
+        run: |
+          npx jest \
+            --ci \
+            --forceExit \
+            --coverage \
+            --coverageReporters=lcov \
+            --coverageReporters=text-summary
+        env:
+          DATABASE_URL: "postgresql://mock:mock@localhost:5432/contratos_db"
+          RABBITMQ_URL: "amqp://mock:mock@localhost:5672"
+          REDIS_URL: "redis://:mock@localhost:6379"
+          PORT: "3002"
+
+      - name: "Upload do relatório de cobertura"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-contratos
+          path: backend/services/contratos-service/coverage/
+          retention-days: 7
+
+propostas-ci:
+    name: "Propostas Service — Build & Test (CQRS + WebSocket)"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/services/propostas-service
+
+    steps:
+      - name: "Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "Configurar Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/services/propostas-service/package-lock.json
+
+      - name: "Instalar dependências"
+        run: npm ci
+
+      - name: "Compilar TypeScript"
+        run: npm run build
+
+      - name: "Executar testes com cobertura"
+        run: |
+          npx jest \
+            --ci \
+            --forceExit \
+            --coverage \
+            --coverageReporters=lcov \
+            --coverageReporters=text-summary
+        env:
+          DATABASE_URL: "postgresql://mock:mock@localhost:5432/propostas_db"
+          RABBITMQ_URL: "amqp://mock:mock@localhost:5672"
+          REDIS_URL: "redis://:mock@localhost:6379"
+          PORT: "3004"
+
+      - name: "Upload do relatório de cobertura"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-propostas
+          path: backend/services/propostas-service/coverage/
+          retention-days: 7
+
+avaliacoes-ci:
+    name: "Avaliações Service — Build & Test"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/services/avaliacoes-service
+
+    steps:
+      - name: "Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "Configurar Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/services/avaliacoes-service/package-lock.json
+
+      - name: "Instalar dependências"
+        run: npm ci
+
+      - name: "Compilar TypeScript"
+        run: npm run build
+
+      - name: "Executar testes com cobertura"
+        run: |
+          npx jest \
+            --ci \
+            --forceExit \
+            --coverage \
+            --coverageReporters=lcov \
+            --coverageReporters=text-summary
+        env:
+          DATABASE_URL: "postgresql://mock:mock@localhost:5432/avaliacoes_db"
+          RABBITMQ_URL: "amqp://mock:mock@localhost:5672"
+          REDIS_URL: "redis://:mock@localhost:6379"
+          PORT: "3005"
+
+      - name: "Upload do relatório de cobertura"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-avaliacoes
+          path: backend/services/avaliacoes-service/coverage/
+          retention-days: 7
+
+integration-ci:
+    name: "Integração — RabbitMQ + PostgreSQL reais"
+    runs-on: ubuntu-latest
+    needs: [contratos-ci, propostas-ci, avaliacoes-ci]
+
+    services:
+      postgres-propostas:
+        image: postgres:15
+        env:
+          POSTGRES_USER: frella
+          POSTGRES_PASSWORD: frella
+          POSTGRES_DB: propostas_db
+        ports:
+          - 5435:5432
+        options: >-
+          --health-cmd "pg_isready -U frella -d propostas_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: frella
+          RABBITMQ_DEFAULT_PASS: frella
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend/services/propostas-service
+
+    steps:
+      - name: "Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "Configurar Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: backend/services/propostas-service/package-lock.json
+
+      - name: "Instalar dependências"
+        run: npm ci
+
+      - name: "Aguardar serviços ficarem prontos"
+        run: |
+          echo "Verificando PostgreSQL..."
+          until pg_isready -h localhost -p 5435 -U frella; do sleep 2; done
+          echo "Verificando RabbitMQ..."
+          until curl -s http://localhost:15672 > /dev/null; do sleep 2; done
+          echo "Todos os serviços prontos!"
+
+      - name: "Rodar migrations do banco de dados"
+        run: npx ts-node src/infrastructure/database/migrate.ts
+        env:
+          DATABASE_URL: "postgresql://frella:frella@localhost:5435/propostas_db"
+
+      - name: "Testes de integração com infra real"
+        run: |
+          npx jest \
+            --ci \
+            --forceExit \
+            --testPathPattern="integration|service|controller" \
+            --passWithNoTests
+        env:
+          DATABASE_URL: "postgresql://frella:frella@localhost:5435/propostas_db"
+          RABBITMQ_URL: "amqp://frella:frella@localhost:5672"
+          REDIS_URL: "redis://localhost:6379"
+          PORT: "3004"
+          NODE_ENV: "test"
+
+      - name: "Upload dos logs de integração"
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: integration-logs
+          path: backend/services/propostas-service/logs/
+          retention-days: 3
+
+docker-build-b:
+    name: "Docker — Smoke Build (Business Services)"
+    runs-on: ubuntu-latest
+    needs: [contratos-ci, propostas-ci, avaliacoes-ci]
+    if: github.event_name == 'push'
+
+    steps:
+      - name: "Checkout do repositório"
+        uses: actions/checkout@v4
+
+      - name: "Configurar Docker Buildx"
+        uses: docker/setup-buildx-action@v3
+
+      - name: "Build — contratos-service"
+        uses: docker/build-push-action@v5
+        with:
+          context: backend/services/contratos-service
+          push: false
+          tags: frella/contratos-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: "Build — propostas-service"
+        uses: docker/build-push-action@v5
+        with:
+          context: backend/services/propostas-service
+          push: false
+          tags: frella/propostas-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: "Build — avaliacoes-service"
+        uses: docker/build-push-action@v5
+        with:
+          context: backend/services/avaliacoes-service
+          push: false
+          tags: frella/avaliacoes-service:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
