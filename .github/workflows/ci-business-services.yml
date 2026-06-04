@@ -249,7 +249,7 @@ jobs:
           echo "Verificando PostgreSQL..."
           until pg_isready -h localhost -p 5435 -U frella; do sleep 2; done
           echo "Verificando RabbitMQ..."
-          until curl -s http://localhost:15672 > /dev/null; do sleep 2; done
+          until nc -z localhost 5672; do sleep 2; done
           echo "Todos os serviços prontos!"
 
       - name: "Rodar migrations do banco de dados"
