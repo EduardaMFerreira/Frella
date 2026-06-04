@@ -18,6 +18,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.20.0",
     "swagger-jsdoc": "^6.2.8",
@@ -43,22 +44,25 @@
     "typescript": "^6.0.3"
   },
   "jest": {
-  "preset": "ts-jest",
-  "testEnvironment": "node",
-  "testMatch": [
-    "**/__tests__/**/*.test.ts"
-  ],
-  "moduleFileExtensions": [
-    "ts",
-    "js"
-  ],
-  "collectCoverageFrom": [
-    "src/**/*.ts",
-    "!src/server.ts",
-    "!src/**/*.d.ts",
-    "!src/infrastructure/database/migrate.ts"
-  ],
-  "coverageDirectory": "coverage",
-  "coverageReporters": ["lcov", "text-summary"]
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.ts"
+    ],
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/server.ts",
+      "!src/**/*.d.ts",
+      "!src/infrastructure/database/migrate.ts"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "lcov",
+      "text-summary"
+    ]
   }
 }
