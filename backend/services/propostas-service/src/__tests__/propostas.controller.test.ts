@@ -3,6 +3,21 @@ import app from "../app";
 import { PropostaRepository } from "../infrastructure/database/PropostaRepository";
 import { PropostaReadRepository } from "../infrastructure/database/PropostaReadRepository";
 
+jest.mock('../infrastructure/resilience/ResiliencePolicy', () => ({
+  resilientPolicy: {
+    execute: jest.fn((fn: () => Promise<any>) => fn()),
+  },
+}));
+
+jest.mock('../infrastructure/database/PropostaRepositoryResilient', () => ({
+  PropostaRepositoryResilient: {
+    create: jest.fn(),
+    findById: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+}));
+
 jest.mock("../infrastructure/messaging/rabbitmq/RabbitMQConnection", () => ({
   publishEvent: jest.fn().mockResolvedValue(undefined),
   getRabbitMQChannel: jest.fn().mockResolvedValue({}),
@@ -11,7 +26,7 @@ jest.mock("../infrastructure/messaging/rabbitmq/RabbitMQConnection", () => ({
 jest.mock("../infrastructure/database/PropostaRepository");
 jest.mock("../infrastructure/database/PropostaReadRepository");
 
-jest.mock('../infrastructure/cache/RedisCacheService', () => ({
+jest.mock('../infrastructure/cache/RadisCacheService', () => ({
   RedisCacheService: jest.fn().mockImplementation(() => ({
     get: jest.fn().mockResolvedValue(null),
     set: jest.fn().mockResolvedValue(undefined),
@@ -33,7 +48,6 @@ const mockProposta = {
 };
 
 describe("Propostas Controller", () => {
-
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -73,5 +87,4 @@ describe("Propostas Controller", () => {
 
     expect(res.status).toBe(201);
   });
-
 });
