@@ -1,5 +1,5 @@
 ---
-name: "CI · Business Services"
+name: "CI · Business Services (Contratos / Propostas / Avaliações)"
 
 "on":
   push:
@@ -45,6 +45,10 @@ jobs:
           cache: "npm"
           cache-dependency-path: >-
             backend/services/contratos-service/package-lock.json
+
+      - name: "Instalar dependências do shared"
+        run: npm install
+        working-directory: shared
 
       - name: "Instalar dependências"
         run: npm ci
@@ -92,6 +96,10 @@ jobs:
           cache-dependency-path: >-
             backend/services/propostas-service/package-lock.json
 
+      - name: "Instalar dependências do shared"
+        run: npm install
+        working-directory: shared
+
       - name: "Instalar dependências"
         run: npm ci
 
@@ -137,6 +145,10 @@ jobs:
           cache: "npm"
           cache-dependency-path: >-
             backend/services/avaliacoes-service/package-lock.json
+
+      - name: "Instalar dependências do shared"
+        run: npm install
+        working-directory: shared
 
       - name: "Instalar dependências"
         run: npm ci
@@ -224,6 +236,10 @@ jobs:
           cache: "npm"
           cache-dependency-path: >-
             backend/services/propostas-service/package-lock.json
+
+      - name: "Instalar dependências do shared"
+        run: npm install
+        working-directory: shared
 
       - name: "Instalar dependências"
         run: npm ci
