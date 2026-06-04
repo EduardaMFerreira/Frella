@@ -26,7 +26,7 @@ jest.mock("../infrastructure/messaging/rabbitmq/RabbitMQConnection", () => ({
 jest.mock("../infrastructure/database/PropostaRepository");
 jest.mock("../infrastructure/database/PropostaReadRepository");
 
-jest.mock('../infrastructure/cache/RadisCacheService', () => ({
+jest.mock('../infrastructure/cache/RedisCacheService', () => ({
   RedisCacheService: jest.fn().mockImplementation(() => ({
     get: jest.fn().mockResolvedValue(null),
     set: jest.fn().mockResolvedValue(undefined),
