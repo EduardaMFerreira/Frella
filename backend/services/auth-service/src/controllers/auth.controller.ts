@@ -15,13 +15,14 @@ export const AuthController = {
 
   async login(req: Request, res: Response) {
     try {
-      const result = await LoginUseCase(req.body);
+      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      const result = await LoginUseCase(req.body, ip);
       res.status(200).json(result);
     } catch (err: any) {
-      res.status(401).json({ error: err.message });
+      const status = err.message.includes('Muitas tentativas') ? 429 : 401;
+      res.status(status).json({ error: err.message });
     }
   },
-
   async logout(req: Request, res: Response) {
     try {
       const authHeader = req.headers.authorization;
