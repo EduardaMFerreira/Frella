@@ -262,7 +262,7 @@ jobs:
           npx jest \
             --ci \
             --forceExit \
-            --testPathPattern="integration|service|controller" \
+            --testPathPatterns="integration|service|controller" \
             --passWithNoTests
         env:
           DATABASE_URL: "postgresql://frella:frella@localhost:5435/propostas_db"
