@@ -1,6 +1,7 @@
-name: "CI · Business Services (Contratos / Propostas / Avaliações)"
+---
+name: "CI · Business Services"
 
-on:
+"on":
   push:
     branches: [main, develop]
     paths:
@@ -33,7 +34,6 @@ jobs:
     defaults:
       run:
         working-directory: backend/services/contratos-service
-
     steps:
       - name: "Checkout do repositório"
         uses: actions/checkout@v4
@@ -43,7 +43,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: backend/services/contratos-service/package-lock.json
+          cache-dependency-path: >-
+            backend/services/contratos-service/package-lock.json
 
       - name: "Instalar dependências"
         run: npm ci
@@ -73,13 +74,12 @@ jobs:
           path: backend/services/contratos-service/coverage/
           retention-days: 7
 
-propostas-ci:
+  propostas-ci:
     name: "Propostas Service — Build & Test (CQRS + WebSocket)"
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend/services/propostas-service
-
     steps:
       - name: "Checkout do repositório"
         uses: actions/checkout@v4
@@ -89,7 +89,8 @@ propostas-ci:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: backend/services/propostas-service/package-lock.json
+          cache-dependency-path: >-
+            backend/services/propostas-service/package-lock.json
 
       - name: "Instalar dependências"
         run: npm ci
@@ -119,13 +120,12 @@ propostas-ci:
           path: backend/services/propostas-service/coverage/
           retention-days: 7
 
-avaliacoes-ci:
+  avaliacoes-ci:
     name: "Avaliações Service — Build & Test"
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend/services/avaliacoes-service
-
     steps:
       - name: "Checkout do repositório"
         uses: actions/checkout@v4
@@ -135,7 +135,8 @@ avaliacoes-ci:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: backend/services/avaliacoes-service/package-lock.json
+          cache-dependency-path: >-
+            backend/services/avaliacoes-service/package-lock.json
 
       - name: "Instalar dependências"
         run: npm ci
@@ -165,7 +166,7 @@ avaliacoes-ci:
           path: backend/services/avaliacoes-service/coverage/
           retention-days: 7
 
-integration-ci:
+  integration-ci:
     name: "Integração — RabbitMQ + PostgreSQL reais"
     runs-on: ubuntu-latest
     needs: [contratos-ci, propostas-ci, avaliacoes-ci]
@@ -221,7 +222,8 @@ integration-ci:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: backend/services/propostas-service/package-lock.json
+          cache-dependency-path: >-
+            backend/services/propostas-service/package-lock.json
 
       - name: "Instalar dependências"
         run: npm ci
@@ -261,7 +263,7 @@ integration-ci:
           path: backend/services/propostas-service/logs/
           retention-days: 3
 
-docker-build-b:
+  docker-build-b:
     name: "Docker — Smoke Build (Business Services)"
     runs-on: ubuntu-latest
     needs: [contratos-ci, propostas-ci, avaliacoes-ci]
