@@ -9,22 +9,27 @@ jest.mock('../infrastructure/resilience/ResiliencePolicy', () => ({
   },
 }));
 
-jest.mock('../infrastructure/database/PropostaRepositoryResilient', () => ({
-  PropostaRepositoryResilient: {
-    create: jest.fn(),
-    findById: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  },
-}));
-
 jest.mock("../infrastructure/messaging/rabbitmq/RabbitMQConnection", () => ({
   publishEvent: jest.fn().mockResolvedValue(undefined),
   getRabbitMQChannel: jest.fn().mockResolvedValue({}),
 }));
 
-jest.mock("../infrastructure/database/PropostaRepository");
-jest.mock("../infrastructure/database/PropostaReadRepository");
+jest.mock("../infrastructure/database/PropostaRepository", () => ({
+  PropostaRepository: {
+    findAll: jest.fn(),
+    findById: jest.fn(),
+    create: jest.fn(),
+    updateStatus: jest.fn(),
+    remove: jest.fn(),
+  },
+}));
+
+jest.mock("../infrastructure/database/PropostaReadRepository", () => ({
+  PropostaReadRepository: {
+    listarTodas: jest.fn(),
+    buscarPorId: jest.fn(),
+  },
+}));
 
 jest.mock('../infrastructure/cache/RedisCacheService', () => ({
   RedisCacheService: jest.fn().mockImplementation(() => ({
@@ -80,7 +85,6 @@ describe("Propostas Controller", () => {
         titulo: "Reforma banheiro",
         descricao: "Desenvolvimento de sistema",
         valor: 3500,
-        status: "CRIADA",
         cliente_id: "456e4567-e89b-12d3-a456-426614174001",
         prestador_id: "789e4567-e89b-12d3-a456-426614174002",
       });
