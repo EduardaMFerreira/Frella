@@ -1,5 +1,5 @@
 ---
-name: "CI · Business Services (Contratos / Propostas / Avaliações)"
+name: "CI · Business Services"
 
 "on":
   push:
