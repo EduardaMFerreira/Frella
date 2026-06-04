@@ -10,7 +10,7 @@ name: "CI · Core Services"
       - "backend/services/clientes-service/**"
       - "backend/services/prestadores-service/**"
       - "shared/**"
-      - ".github/workflows/ci-pessoa-a.yml"
+      - ".github/workflows/ci-core-services.yml"
   pull_request:
     branches: [main, develop]
     paths:
@@ -19,10 +19,10 @@ name: "CI · Core Services"
       - "backend/services/clientes-service/**"
       - "backend/services/prestadores-service/**"
       - "shared/**"
-      - ".github/workflows/ci-pessoa-a.yml"
+      - ".github/workflows/ci-core-services.yml"
 
 concurrency:
-  group: pessoa-a-${{ github.ref }}
+  group: core-services-${{ github.ref }}
   cancel-in-progress: true
 
 env:
