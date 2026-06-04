@@ -282,9 +282,18 @@ services:
       DATABASE_URL: postgresql://frella:frella@postgres-auth:5432/auth_db
       PORT: 3006
       JWT_SECRET: ${JWT_SECRET:-frella_secret_key}
+
+      RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
+      REDIS_URL: redis://:frella_redis@redis:6379
+
     depends_on:
       postgres-auth:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
     networks:
       - frella_net
 

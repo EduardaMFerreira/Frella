@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import rateLimit from "express-rate-limit";
+import Redis from "ioredis";
 import { auth } from "./middlewares/authMiddleware";
 import { loggerMiddleware, logger } from "./middlewares/loggerMiddleware";
 import { errorHandler } from "./middlewares/errorMiddleware";
@@ -9,6 +10,9 @@ import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger";
 
 const app = express();
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+
+const redis = new Redis(REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 3 });
 
 app.use(cors());
 app.use(express.json());
@@ -20,9 +24,7 @@ const limiterGlobal = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  message: {
-    error: "Muitas requisições. Tente novamente em 15 minutos.",
-  },
+  message: { error: "Muitas requisições. Tente novamente em 15 minutos." },
 });
 
 const limiterAuth = rateLimit({
@@ -30,9 +32,7 @@ const limiterAuth = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: {
-    error: "Muitas tentativas de autenticação. Tente novamente em 15 minutos.",
-  },
+  message: { error: "Muitas tentativas de autenticação. Tente novamente em 15 minutos." },
 });
 
 app.use(limiterGlobal);
@@ -49,13 +49,23 @@ app.get("/health/live", (req, res) => {
   });
 });
 
-app.get("/health/ready", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    service: "api-gateway",
-    timestamp: new Date().toISOString(),
-    dependencies: {},
-  });
+app.get("/health/ready", async (req, res) => {
+  try {
+    await redis.ping();
+    res.status(200).json({
+      status: "ok",
+      service: "api-gateway",
+      timestamp: new Date().toISOString(),
+      dependencies: { redis: { status: "ok" } },
+    });
+  } catch {
+    res.status(503).json({
+      status: "degraded",
+      service: "api-gateway",
+      timestamp: new Date().toISOString(),
+      dependencies: { redis: { status: "error" } },
+    });
+  }
 });
 
 app.get("/health", (req, res) => {
@@ -128,6 +138,6 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  logger.info('Gateway iniciado', { port: PORT });
+  logger.info("Gateway iniciado", { port: PORT });
   logger.info(`Documentação disponível em http://localhost:${PORT}/docs`);
 });
