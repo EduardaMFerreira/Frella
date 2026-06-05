@@ -14,23 +14,36 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const isProduction = process.env.NODE_ENV === "production";
+const routesPath = isProduction
+  ? "/app/dist/routes/*.js"
+  : "./src/routes/*.ts";
+
 const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
       title: "Auth Service API",
       version: "1.0.0",
-      description: "Microsserviço de autenticação",
+      description: "Microsservico de autenticacao",
     },
     servers: [{ url: "http://localhost:3006" }],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
-  apis: ["./src/routes/*.ts"],
+  apis: [routesPath],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 app.use("/api/auth", authRoutes);
 
 // Liveness

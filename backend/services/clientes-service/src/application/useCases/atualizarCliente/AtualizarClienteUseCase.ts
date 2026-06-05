@@ -2,6 +2,7 @@ import { ClienteRepository } from "../../../infrastructure/database/ClienteRepos
 import { Cliente } from "../../../domain/entities/Cliente";
 import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
+import { RabbitMQConnection } from "../../../infrastructure/messaging/RabbitMQConnection";
 
 const cache = new RedisCacheService();
 
@@ -31,6 +32,16 @@ export async function AtualizarClienteUseCase(
   }
 
   const atualizado = await ClienteRepository.update(id, data);
+
+  await RabbitMQConnection.publish(
+    "cliente.atualizado",
+    {
+      id: atualizado.id,
+      nome: atualizado.nome,
+      email: atualizado.email,
+      telefone: atualizado.telefone
+    }
+  );
 
   await cache.invalidate(`cliente:item:${id}`);
   await cache.invalidatePattern('cliente:lista:*');

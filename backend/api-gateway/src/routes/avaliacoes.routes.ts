@@ -13,21 +13,6 @@ const router = Router();
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     Avaliacao:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         nota:
- *           type: number
- *         comentario:
- *           type: string
- */
-
-/**
- * @swagger
  * /api/v1/avaliacoes:
  *   get:
  *     summary: Lista avaliações
@@ -35,13 +20,6 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Lista de avaliações
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Avaliacao'
- *
  *   post:
  *     summary: Cria avaliação
  *     tags: [Avaliacoes]
@@ -50,15 +28,36 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               nota:
- *                 type: number
- *               comentario:
- *                 type: string
+ *             $ref: '#/components/schemas/Avaliacao'
  *     responses:
  *       201:
  *         description: Avaliação criada
+ *
+ * /api/v1/avaliacoes/{id}:
+ *   get:
+ *     summary: Busca avaliação por ID
+ *     tags: [Avaliacoes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Avaliação encontrada
+ *   delete:
+ *     summary: Remove avaliação
+ *     tags: [Avaliacoes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Avaliação removida
  */
 
 router.use("/", createServiceProxy(services.avaliacoes));

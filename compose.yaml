@@ -163,7 +163,9 @@ services:
   # ────────────────────────────────────────
 
   api-gateway:
-    build: ./backend/api-gateway
+    build:
+      context: ./backend
+      dockerfile: api-gateway/Dockerfile
     container_name: frella-api-gateway
     ports:
       - "3000:3000"
@@ -180,16 +182,21 @@ services:
       - frella_net
 
   clientes-service:
-    build: ./backend/services/clientes-service
+    build:
+      context: .
+      dockerfile: backend/services/clientes-service/Dockerfile
     container_name: frella-clientes-service
     ports:
       - "3001:3001"
     environment:
       DATABASE_URL: postgresql://frella:frella@postgres-clientes:5432/clientes_db
       PORT: 3001
+      RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
       REDIS_URL: redis://:frella_redis@redis:6379
     depends_on:
       postgres-clientes:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -197,16 +204,21 @@ services:
       - frella_net
 
   prestadores-service:
-    build: ./backend/services/prestadores-service
+    build:
+      context: .
+      dockerfile: backend/services/prestadores-service/Dockerfile
     container_name: frella-prestadores-service
     ports:
       - "3003:3003"
     environment:
       DATABASE_URL: postgresql://frella:frella@postgres-prestadores:5432/prestadores_db
       PORT: 3003
+      RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
       REDIS_URL: redis://:frella_redis@redis:6379
     depends_on:
       postgres-prestadores:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -214,7 +226,9 @@ services:
       - frella_net
 
   contratos-service:
-    build: ./backend/services/contratos-service
+    build:
+      context: .
+      dockerfile: backend/services/contratos-service/Dockerfile
     container_name: frella-contratos-service
     ports:
       - "3002:3002"
@@ -234,7 +248,9 @@ services:
       - frella_net
 
   propostas-service:
-    build: ./backend/services/propostas-service
+    build:
+      context: .
+      dockerfile: backend/services/propostas-service/Dockerfile
     container_name: frella-propostas-service
     ports:
       - "3004:3004"
@@ -254,7 +270,9 @@ services:
       - frella_net
 
   avaliacoes-service:
-    build: ./backend/services/avaliacoes-service
+    build:
+      context: .
+      dockerfile: backend/services/avaliacoes-service/Dockerfile
     container_name: frella-avaliacoes-service
     ports:
       - "3005:3005"
@@ -274,7 +292,9 @@ services:
       - frella_net
 
   auth-service:
-    build: ./backend/services/auth-service
+    build:
+      context: .
+      dockerfile: backend/services/auth-service/Dockerfile
     container_name: frella-auth-service
     ports:
       - "3006:3006"
@@ -282,18 +302,11 @@ services:
       DATABASE_URL: postgresql://frella:frella@postgres-auth:5432/auth_db
       PORT: 3006
       JWT_SECRET: ${JWT_SECRET:-frella_secret_key}
-
       RABBITMQ_URL: amqp://frella:frella@rabbitmq:5672
       REDIS_URL: redis://:frella_redis@redis:6379
-
     depends_on:
       postgres-auth:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
     networks:
       - frella_net
 

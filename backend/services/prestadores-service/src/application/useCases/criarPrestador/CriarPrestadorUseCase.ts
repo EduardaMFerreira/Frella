@@ -3,6 +3,8 @@ import { Especialidade } from "../../../domain/valueObjects/Especialidade";
 import { Prestador } from "../../../domain/entities/Prestador";
 import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
+import { RabbitMQConnection } from "../../../infrastructure/messaging/RabbitMQConnection";
+import { PrestadorCriadoEvent } from "../../../domain/events/PrestadorCriadoEvent";
 
 const cache = new RedisCacheService();
 
@@ -59,6 +61,17 @@ export async function CriarPrestadorUseCase(
     valor_hora: data.valor_hora,
     endereco: data.endereco,
   });
+
+  const evento = new PrestadorCriadoEvent(
+    prestador.id,
+    prestador.nome,
+    prestador.email
+  );
+
+  await RabbitMQConnection.publish(
+    "prestador.criado",
+    evento
+  );
 
   await cache.invalidatePattern('prestador:lista:*');
 

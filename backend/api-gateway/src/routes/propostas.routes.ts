@@ -13,21 +13,6 @@ const router = Router();
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     Proposta:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         descricao:
- *           type: string
- *         valor:
- *           type: number
- */
-
-/**
- * @swagger
  * /api/v1/propostas:
  *   get:
  *     summary: Lista propostas
@@ -35,15 +20,72 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Lista de propostas
- *
  *   post:
  *     summary: Cria proposta
  *     tags: [Propostas]
  *     requestBody:
  *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Proposta'
  *     responses:
  *       201:
- *         description: Criada
+ *         description: Proposta criada
+ *
+ * /api/v1/propostas/{id}:
+ *   get:
+ *     summary: Busca proposta por ID
+ *     tags: [Propostas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proposta encontrada
+ *   delete:
+ *     summary: Remove proposta
+ *     tags: [Propostas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Proposta removida
+ *
+ * /api/v1/propostas/{id}/aceitar:
+ *   patch:
+ *     summary: Aceita proposta
+ *     tags: [Propostas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proposta aceita
+ *
+ * /api/v1/propostas/{id}/recusar:
+ *   patch:
+ *     summary: Recusa proposta
+ *     tags: [Propostas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proposta recusada
  */
 
 router.use("/", createServiceProxy(services.propostas));

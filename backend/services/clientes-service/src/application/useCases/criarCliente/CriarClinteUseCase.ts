@@ -4,6 +4,7 @@ import { CriarClienteDTO } from "./CriarClienteDTO";
 import { Cliente } from "../../../domain/entities/Cliente";
 import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
+import { RabbitMQConnection } from "../../../infrastructure/messaging/RabbitMQConnection";
 
 const cache = new RedisCacheService();
 
@@ -37,6 +38,16 @@ export async function CriarClienteUseCase(data: CriarClienteDTO): Promise<Client
     telefone: data.telefone?.trim(),
     endereco,
   });
+
+  await RabbitMQConnection.publish(
+  "cliente.criado",
+    {
+      id: cliente.id,
+      nome: cliente.nome,
+      email: cliente.email,
+      telefone: cliente.telefone
+    }
+  );
 
   await cache.invalidatePattern('cliente:lista:*');
 

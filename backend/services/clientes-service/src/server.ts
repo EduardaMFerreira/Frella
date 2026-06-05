@@ -5,9 +5,19 @@ import clientesRoutes from "./routes/clientes.routes";
 import { runMigrations } from "./infrastructure/database/migrate";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
-import { correlationIdMiddleware } from '../../../../shared/correlationIdMiddleware';
-import { httpLoggerMiddleware } from '../../../../shared/httpLoggerMiddleware';
+import { correlationIdMiddleware } from '@frella/shared';
+import { httpLoggerMiddleware } from '@frella/shared';
 import { logger } from './infrastructure/logger';
+import { RabbitMQConnection } from "./infrastructure/messaging/RabbitMQConnection";
+
+(async () => {
+  try {
+    await RabbitMQConnection.connect();
+    console.log("RabbitMQ conectado!");
+  } catch (error) {
+    console.error("Erro RabbitMQ:", error);
+  }
+})();
 
 dotenv.config();
 
