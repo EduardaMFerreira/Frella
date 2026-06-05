@@ -45,26 +45,29 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.3"
   },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/__tests__/**/*.test.ts"
-    ],
-    "moduleFileExtensions": [
-      "ts",
-      "js"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.ts",
-      "!src/server.ts",
-      "!src/**/*.d.ts",
-      "!src/infrastructure/database/migrate.ts"
-    ],
-    "coverageDirectory": "coverage",
-    "coverageReporters": [
-      "lcov",
-      "text-summary"
-    ]
-  }
+ "jest": {
+  "preset": "ts-jest",
+  "testEnvironment": "node",
+  "testMatch": [
+    "**/__tests__/**/*.test.ts"
+  ],
+  "moduleFileExtensions": [
+    "ts",
+    "js"
+  ],
+  "moduleNameMapper": {
+    "^@frella/shared$": "<rootDir>/../../packages/shared/index.ts"
+  },
+  "collectCoverageFrom": [
+    "src/**/*.ts",
+    "!src/server.ts",
+    "!src/**/*.d.ts",
+    "!src/infrastructure/database/migrate.ts"
+  ],
+  "coverageDirectory": "coverage",
+  "coverageReporters": [
+    "lcov",
+    "text-summary"
+  ]
+}
 }
