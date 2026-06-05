@@ -9,7 +9,11 @@ import {
 
 export const getAll = async (req: Request, res: Response) => {
   try {
-    const clientes = await ListarClientesUseCase();
+    const { nome, email } = req.query;
+    const clientes = await ListarClientesUseCase({
+      nome: nome as string | undefined,
+      email: email as string | undefined,
+    });
     res.status(200).json(clientes);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

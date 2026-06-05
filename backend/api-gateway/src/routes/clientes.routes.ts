@@ -13,21 +13,6 @@ const router = Router();
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     Cliente:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         nome:
- *           type: string
- *         email:
- *           type: string
- */
-
-/**
- * @swagger
  * /api/v1/clientes:
  *   get:
  *     summary: Lista clientes
@@ -35,13 +20,6 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Lista de clientes
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Cliente'
- *
  *   post:
  *     summary: Cria cliente
  *     tags: [Clientes]
@@ -50,15 +28,54 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               nome:
- *                 type: string
- *               email:
- *                 type: string
+ *             $ref: '#/components/schemas/Cliente'
  *     responses:
  *       201:
  *         description: Cliente criado
+ *
+ * /api/v1/clientes/{id}:
+ *   get:
+ *     summary: Busca cliente por ID
+ *     tags: [Clientes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Cliente encontrado
+ *   put:
+ *     summary: Atualiza cliente
+ *     tags: [Clientes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Cliente'
+ *     responses:
+ *       200:
+ *         description: Cliente atualizado
+ *   delete:
+ *     summary: Remove cliente
+ *     tags: [Clientes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Cliente removido
  */
 
 router.use("/", createServiceProxy(services.clientes));

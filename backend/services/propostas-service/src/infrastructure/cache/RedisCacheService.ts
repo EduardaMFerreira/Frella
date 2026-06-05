@@ -1,20 +1,19 @@
 import Redis from 'ioredis';
 import { ICacheService } from '../../application/interfaces/ICacheService';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const DEFAULT_TTL = 300; // 5 minutos
 
 export class RedisCacheService implements ICacheService {
   private client: Redis;
 
   constructor() {
+    const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+    console.log('[Redis] Conectando em:', REDIS_URL);
     this.client = new Redis(REDIS_URL);
-
     this.client.on('connect', () =>
       console.log('[Redis] Conectado com sucesso!'));
-
     this.client.on('error', (err) =>
-      console.error('[Redis] Erro:', err.message));
+      console.error('[Redis] Erro:', err));
   }
 
   async get<T>(key: string): Promise<T | null> {

@@ -5,8 +5,8 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import avaliacoesRoutes from "./routes/avaliacoes.routes";
 import { runMigrations } from "./infrastructure/database/migrate";
-import { correlationIdMiddleware } from '../../../../shared/correlationIdMiddleware';
-import { httpLoggerMiddleware } from '../../../../shared/httpLoggerMiddleware';
+import { correlationIdMiddleware } from '@frella/shared';
+import { httpLoggerMiddleware } from '@frella/shared';
 import { logger } from './infrastructure/logger';
 
 dotenv.config();
