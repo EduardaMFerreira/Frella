@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.0](https://github.com/EduardaMFerreira/Frella/compare/v0.2.0...v0.3.0) (2026-06-09)
+
+
+### Novas Funcionalidades
+
+* adiciona ioredis e RedisCacheService ao auth-service ([c7971c8](https://github.com/EduardaMFerreira/Frella/commit/c7971c89e7831de1e9e363a95a0549d225120c74))
+* adiciona ioredis e RedisCacheService ao auth-service ([bb3c678](https://github.com/EduardaMFerreira/Frella/commit/bb3c67889e6dc7e27a36e496914653f6d1373cab))
+* **gateway:** add request body, path params and query filters to all services swagger docs ([efa1959](https://github.com/EduardaMFerreira/Frella/commit/efa19592e0fcbadf3f4b995009b1be086c8a9ac3))
+* **gateway:** add request body, path params and query filters to all… ([f0e1d3a](https://github.com/EduardaMFerreira/Frella/commit/f0e1d3ae97a2acaf1d2d1e8a3d70bc6387dcfe5d))
+* **infra:** add Prometheus and Grafana monitoring ([ebc20c4](https://github.com/EduardaMFerreira/Frella/commit/ebc20c4dd8a207717565d0531440a1494e1cbe06))
+
+
+### Correções de Bug
+
+* adicionar cors no prestadores-service ([02d90b9](https://github.com/EduardaMFerreira/Frella/commit/02d90b96494d91edf6aa0add614182a656bee7c0))
+* **auth:** corrigir build com shared ([9f49452](https://github.com/EduardaMFerreira/Frella/commit/9f494523b82370c5eff850b7e5f408b9062db791))
+* **auth:** corrigir build com shared ([04179b5](https://github.com/EduardaMFerreira/Frella/commit/04179b53615558beca512e0d1dc695b090c0ebe5))
+* **infra:** add shared moduleNameMapper and fix cache invalidation ([8746c4b](https://github.com/EduardaMFerreira/Frella/commit/8746c4b78237ce2ea63b61c3c74c0244e825451a))
+* mover CREATE TABLE para migrate.ts no auth-service ([b9ed9de](https://github.com/EduardaMFerreira/Frella/commit/b9ed9de1bd018e0127d6bab979f9818abd23cee0))
+* mover CREATE TABLE para migrate.ts no auth-service ([7c63250](https://github.com/EduardaMFerreira/Frella/commit/7c632501b33306d215f3c439b1691a0f150a1177))
+
 ## [0.2.0](https://github.com/EduardaMFerreira/Frella/compare/v0.1.0...v0.2.0) (2026-06-04)
 
 
