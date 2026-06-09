@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:3000']
+
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:3006']
+
+  - job_name: 'clientes-service'
+    static_configs:
+      - targets: ['clientes-service:3001']
+
+  - job_name: 'prestadores-service'
+    static_configs:
+      - targets: ['prestadores-service:3003']
+
+  - job_name: 'contratos-service'
+    static_configs:
+      - targets: ['contratos-service:3002']
+
+  - job_name: 'propostas-service'
+    static_configs:
+      - targets: ['propostas-service:3004']
+
+  - job_name: 'avaliacoes-service'
+    static_configs:
+      - targets: ['avaliacoes-service:3005']

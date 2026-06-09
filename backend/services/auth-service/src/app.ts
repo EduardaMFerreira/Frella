@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
+import { register, httpRequestCounter, httpRequestDuration } from './metrics';
 
 import authRoutes from "./routes/auth.routes";
 import { getReadinessStatus } from "./infrastructure/health/HealthService";
@@ -13,6 +14,22 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// ── Métricas ──────────────────────────────────────────────
+app.use((req, res, next) => {
+  const end = httpRequestDuration.startTimer();
+  res.on('finish', () => {
+    const route = req.route?.path ?? req.path;
+    httpRequestCounter.inc({ method: req.method, route, status: res.statusCode });
+    end({ method: req.method, route, status: res.statusCode });
+  });
+  next();
+});
+
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
 const isProduction = process.env.NODE_ENV === "production";
 const routesPath = isProduction
