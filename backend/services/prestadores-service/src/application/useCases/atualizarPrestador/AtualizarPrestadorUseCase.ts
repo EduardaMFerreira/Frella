@@ -2,6 +2,8 @@ import { PrestadorRepository } from "../../../infrastructure/database/PrestadorR
 import { Prestador } from "../../../domain/entities/Prestador";
 import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
 import { logger } from "../../../infrastructure/logger";
+import { RabbitMQConnection } from "../../../infrastructure/messaging/RabbitMQConnection";
+import { PrestadorAtualizadoEvent } from "../../../domain/events/PrestadorAtualizadoEvent";
 
 const cache = new RedisCacheService();
 
@@ -26,6 +28,17 @@ export async function AtualizarPrestadorUseCase(
   }
 
   const atualizado = await PrestadorRepository.update(id, data);
+
+  const evento = new PrestadorAtualizadoEvent(
+    atualizado.id,
+    atualizado.nome,
+    atualizado.email
+  );
+
+  await RabbitMQConnection.publish(
+    "prestador.atualizado",
+    evento
+  );
 
   await cache.invalidate(`prestador:item:${id}`);
   await cache.invalidatePattern('prestador:lista:*');

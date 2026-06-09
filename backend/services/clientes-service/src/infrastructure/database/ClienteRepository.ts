@@ -9,6 +9,28 @@ export const ClienteRepository = {
     return result.rows;
   },
 
+  async findByFilter(filtros: { nome?: string; email?: string }): Promise<Cliente[]> {
+    const conditions: string[] = [];
+    const values: unknown[] = [];
+    let idx = 1;
+
+    if (filtros.nome) {
+      conditions.push(`nome ILIKE $${idx++}`);
+      values.push(`%${filtros.nome}%`);
+    }
+    if (filtros.email) {
+      conditions.push(`email ILIKE $${idx++}`);
+      values.push(`%${filtros.email}%`);
+    }
+
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const result = await pool.query(
+      `SELECT * FROM clientes ${where} ORDER BY created_at DESC`,
+      values
+    );
+    return result.rows;
+  },
+
   async findById(id: string): Promise<Cliente | null> {
     const result = await pool.query(
       "SELECT * FROM clientes WHERE id = $1",
@@ -52,7 +74,6 @@ export const ClienteRepository = {
     if (data.email !== undefined) { fields.push(`email = $${idx++}`); values.push(data.email); }
     if (data.telefone !== undefined) { fields.push(`telefone = $${idx++}`); values.push(data.telefone); }
     if (data.endereco !== undefined) { fields.push(`endereco = $${idx++}`); values.push(JSON.stringify(data.endereco)); }
-
     fields.push(`updated_at = NOW()`);
     values.push(id);
 

@@ -2,16 +2,17 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "rootDir": "../../../..",
+    "rootDir": "src",
     "outDir": "./dist",
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "types": ["node", "jest"],
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
     "paths": {
-      "winston": ["./node_modules/winston/index.d.ts"],
-      "express": ["./node_modules/@types/express/index.d.ts"],
-      "uuid": ["./node_modules/@types/uuid/index.d.ts"]
-    }
-  }
+      "@frella/shared": ["../../packages/shared/index.ts"]
+    },
+    "types": ["node", "jest"]
+  },
+  "include": ["src"]
 }
