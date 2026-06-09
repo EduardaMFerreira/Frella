@@ -5,6 +5,9 @@ import { Proposta } from "../../../domain/entities/Proposta";
 import { publishEvent } from "../../../infrastructure/messaging/rabbitmq/RabbitMQConnection";
 import { PropostaCriadaEvent } from "../../../infrastructure/messaging/events/PropostaCriadaEvent";
 import { logger } from "../../../infrastructure/logger";
+import { RedisCacheService } from "../../../infrastructure/cache/RedisCacheService";
+
+const cache = new RedisCacheService();
 
 export class CriarPropostaHandler {
   async execute(cmd: CriarPropostaCommand): Promise<Proposta> {
@@ -35,6 +38,10 @@ export class CriarPropostaHandler {
     };
     await publishEvent(evento);
     logger.info('Evento proposta.criada publicado', { propostaId: proposta.id });
+
+    await cache.invalidatePattern('proposta:lista:*');
+    logger.info('Cache invalidado após criação', { propostaId: proposta.id });
+
     logger.info('Proposta criada com sucesso', { propostaId: proposta.id });
     return proposta;
   }

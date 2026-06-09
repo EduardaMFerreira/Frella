@@ -79,6 +79,7 @@ app.use(
   createProxyMiddleware({
     target: "http://auth-service:3006",
     changeOrigin: true,
+    pathRewrite: { "^/api/v1/auth": "/api/auth" },
   })
 );
 
@@ -89,6 +90,7 @@ app.use(
   createProxyMiddleware({
     target: "http://clientes-service:3001",
     changeOrigin: true,
+    pathRewrite: { "^/api/v1/clientes": "/api/clientes" },
   })
 );
 
@@ -98,6 +100,7 @@ app.use(
   createProxyMiddleware({
     target: "http://prestadores-service:3003",
     changeOrigin: true,
+    pathRewrite: { "^/api/v1/prestadores": "/api/prestadores" },
   })
 );
 
@@ -107,6 +110,7 @@ app.use(
   createProxyMiddleware({
     target: "http://contratos-service:3002",
     changeOrigin: true,
+    pathRewrite: { "^/api/v1/contratos": "/api/contratos" },
   })
 );
 
@@ -116,6 +120,7 @@ app.use(
   createProxyMiddleware({
     target: "http://propostas-service:3004",
     changeOrigin: true,
+    pathRewrite: { "^/api/v1/propostas": "/api/propostas" },
   })
 );
 
@@ -125,6 +130,7 @@ app.use(
   createProxyMiddleware({
     target: "http://avaliacoes-service:3005",
     changeOrigin: true,
+    pathRewrite: { "^/api/v1/avaliacoes": "/api/avaliacoes" },
   })
 );
 
