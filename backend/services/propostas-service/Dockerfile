@@ -1,15 +1,29 @@
-FROM node:20
+# ── Stage 1: build ────────────────────────────────────────
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY backend/packages/shared/ ./packages/shared/
 RUN cd packages/shared && npm install && npx tsc && npm pack
 
 COPY backend/services/propostas-service/package*.json ./propostas-service/
-RUN cd propostas-service && npm install \
+RUN cd propostas-service \
+    && npm install \
     && npm install /app/packages/shared/frella-shared-1.0.0.tgz
 
 COPY backend/services/propostas-service/ ./propostas-service/
+RUN cd propostas-service && npx tsc
+
+# ── Stage 2: produção ─────────────────────────────────────
+FROM node:20-alpine AS production
+WORKDIR /app
+
+COPY --from=builder /app/packages/shared/ ./packages/shared/
+
+COPY backend/services/propostas-service/package*.json ./
+RUN npm install --omit=dev \
+    && npm install /app/packages/shared/frella-shared-1.0.0.tgz
+
+COPY --from=builder /app/propostas-service/dist ./dist
 
 EXPOSE 3004
-WORKDIR /app/propostas-service
-CMD ["npm", "run", "dev"]
+CMD ["node", "dist/server.js"]

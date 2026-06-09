@@ -7,10 +7,27 @@ import swaggerDocument from "./config/swagger";
 import propostasRoutes from "./routes/propostas.routes";
 import { getClientCount } from "./infrastructure/websocket/WebSocketServer";
 import { getReadinessStatus } from "./infrastructure/health/HealthService";
+import { register, httpRequestCounter, httpRequestDuration } from './metrics';
 
 const app = express();
 
 app.use(express.json());
+
+// ── Métricas ──────────────────────────────────────────────
+app.use((req, res, next) => {
+  const end = httpRequestDuration.startTimer();
+  res.on('finish', () => {
+    const route = req.route?.path ?? req.path;
+    httpRequestCounter.inc({ method: req.method, route, status: res.statusCode });
+    end({ method: req.method, route, status: res.statusCode });
+  });
+  next();
+});
+
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
 app.use("/api/propostas", propostasRoutes);
 

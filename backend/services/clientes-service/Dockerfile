@@ -1,17 +1,29 @@
-FROM node:20
+# ── Stage 1: build ────────────────────────────────────────
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# instala e builda o shared
 COPY backend/packages/shared/ ./packages/shared/
 RUN cd packages/shared && npm install && npx tsc && npm pack
 
-# instala o clientes-service com o shared local
 COPY backend/services/clientes-service/package*.json ./clientes-service/
-RUN cd clientes-service && npm install \
+RUN cd clientes-service \
+    && npm install \
     && npm install /app/packages/shared/frella-shared-1.0.0.tgz
 
 COPY backend/services/clientes-service/ ./clientes-service/
+RUN cd clientes-service && npx tsc
+
+# ── Stage 2: produção ─────────────────────────────────────
+FROM node:20-alpine AS production
+WORKDIR /app
+
+COPY --from=builder /app/packages/shared/ ./packages/shared/
+
+COPY backend/services/clientes-service/package*.json ./
+RUN npm install --omit=dev \
+    && npm install /app/packages/shared/frella-shared-1.0.0.tgz
+
+COPY --from=builder /app/clientes-service/dist ./dist
 
 EXPOSE 3001
-WORKDIR /app/clientes-service
-CMD ["npm", "run", "dev"]
+CMD ["node", "dist/server.js"]

@@ -1,9 +1,9 @@
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
-
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec as swaggerDocument } from "./config/swagger";
+import { register, httpRequestCounter, httpRequestDuration } from './metrics';
 
 import prestadoresRoutes from "./routes/prestadores.routes";
 import { getReadinessStatus } from "./infrastructure/health/HealthService";
@@ -12,6 +12,22 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// ── Métricas ──────────────────────────────────────────────
+app.use((req, res, next) => {
+  const end = httpRequestDuration.startTimer();
+  res.on('finish', () => {
+    const route = req.route?.path ?? req.path;
+    httpRequestCounter.inc({ method: req.method, route, status: res.statusCode });
+    end({ method: req.method, route, status: res.statusCode });
+  });
+  next();
+});
+
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
 app.use("/api/prestadores", prestadoresRoutes);
 
